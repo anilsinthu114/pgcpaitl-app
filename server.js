@@ -130,14 +130,14 @@ async function insertApplication(conn, appObj) {
   return res.insertId;
 }
 
-// // ---------- Multer fields (match your HTML) ----------
-// const multerMiddleware = upload.fields([
-//   { name: 'photo', maxCount: 1 },
-//   { name: 'idProof', maxCount: 1 },
-//   { name: 'degreeCert', maxCount: 1 },
-//   { name: 'marksheets', maxCount: 1 },
-//   { name: 'supportDocs', maxCount: 10 }
-// ]);
+// ---------- Multer fields (match your HTML) ----------
+const multerMiddleware = upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'idProof', maxCount: 1 },
+  { name: 'degreeCert', maxCount: 1 },
+  { name: 'marksheets', maxCount: 1 },
+  { name: 'supportDocs', maxCount: 10 }
+]);
 
 // ---------- Routes ----------
 
@@ -145,16 +145,45 @@ async function insertApplication(conn, appObj) {
 app.get('/health', (req, res) => res.json({ ok:true }));
 
 // admin login
-app.post('/admin/login', body('username').isString(), body('password').isString(), async (req,res) => {
-  const { username, password } = req.body;
-  const [rows] = await pool.query('SELECT * FROM admin_users WHERE username=?', [username]);
-  if (rows.length === 0) return res.status(401).json({ ok:false, error:'invalid' });
-  const user = rows[0];
-  const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ ok:false, error:'invalid' });
-  const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  res.json({ ok:true, token });
-});
+app.post(
+  '/admin/login',
+  body('username').isString(),
+  body('password').isString(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ ok: false, error: 'Invalid input' });
+    }
+
+    const { username, password } = req.body;
+    console.log('Admin login attempt:', username);
+    try {
+      const [rows] = await pool.query('SELECT * FROM admin_users WHERE username=?', [username]);
+      if (rows.length === 0) {
+        return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      }
+
+      const user = rows[0];
+      console.log('User found:', user.username);
+      const ok = await bcrypt.compare(password, user.password_hash);
+      if (!ok) {
+        return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+      );
+
+      res.json({ ok: true, token });
+      console.log('Admin login successful:', username);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ ok: false, error: 'Server error' });
+    }
+  }
+);
 
 // application submit (match new form)
 app.post('/application/submit',
@@ -324,6 +353,18 @@ app.get('/application/:id', adminAuth, async (req,res) => {
   res.json({ ok:true, application: apps[0], files });
 });
 
+app.put('/application/:id/status', adminAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  const { status } = req.body;
+
+  if (!["submitted", "reviewed", "approved", "rejected"].includes(status)) {
+    return res.status(400).json({ ok: false, error: "Invalid status" });
+  }
+
+  await pool.query("UPDATE applications SET status=? WHERE id=?", [status, id]);
+  return res.json({ ok: true });
+});
+
 app.get('/application/file/:fileId', adminAuth, async (req,res) => {
   const fileId = Number(req.params.fileId);
   const [rows] = await pool.query('SELECT * FROM application_files WHERE id=?', [fileId]);
@@ -332,6 +373,11 @@ app.get('/application/file/:fileId', adminAuth, async (req,res) => {
   res.setHeader('Content-Type', f.mime || 'application/octet-stream');
   res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(f.original_name)}"`);
   return res.sendFile(path.resolve(f.stored_path));
+});
+
+// Serve dashboard only for authenticated admins
+app.get('/admin/dashboard', adminAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 app.listen(PORT, HOST, () => console.log(`Server running at http://${HOST}:${PORT}`));

@@ -202,7 +202,7 @@
 
       <ul class="steps">
         <li class="active"><span>Step 1</span>Personal Details</li>
-        <li><span>Step 2</span>Contact Info</li>
+        <li class = "unactive"><span>Step 2</span>Contact Info</li>
         <li><span>Step 3</span>Academics</li>
         <li><span>Step 4</span>Documents & Payment</li>
       </ul>
@@ -216,17 +216,17 @@
           <div class="grid">
             <div class="form-group">
               <label>Full Name <span class="required">*</span></label>
-              <input type="text" name="fullName" required>
+              <input type="text" name="fullName" required title="fullName">
             </div>
 
             <div class="form-group">
               <label>Father’s / Mother’s Name <span class="required">*</span></label>
-              <input type="text" name="parentName" required>
+              <input type="text" name="parentName" required title="parentName">
             </div>
 
             <div class="form-group">
               <label>Date of Birth<span class="required" >*</span></label>
-              <input type="date" name="dob" required>
+              <input type="date" name="dob" required title="dob">
             </div>
 
             <div class="form-group">
@@ -241,7 +241,7 @@
 
             <div class="form-group">
               <label>Category<span>*</span></label>
-              <select name="category" required>
+              <select name="category" required title="category">
                 <option value="">Select</option>
                 <option>General</option>
                 <option>SC</option>
@@ -253,7 +253,7 @@
 
             <div class="form-group">
               <label>Nationality<span>*</span></label>
-              <select name="nationality" required>
+              <select name="nationality" required title="nationality">
                 <option value="">Select</option>
                 <option selected>Indian</option>
                 <option>Other</option>
@@ -262,7 +262,7 @@
 
             <div class="form-group">
               <label>Aadhaar (optional)</label>
-              <input type="text" name="aadhaar">
+              <input type="text" name="aadhaar" title="aadhaar">
             </div>
           </div>
         </fieldset>
@@ -273,17 +273,17 @@
           <div class="grid">
             <div class="form-group">
               <label>Mobile Number</label>
-              <input type="tel" name="mobile" required>
+              <input type="tel" name="mobile"  title="mobile">
             </div>
 
             <div class="form-group">
               <label>WhatsApp Number <span>*</span></label>
-              <input type="tel" name="whatsapp">
+              <input type="tel" name="whatsapp" title="whatsapp" required>
             </div>
 
             <div class="form-group">
               <label>Email <span>*</span></label>
-              <input type="email" name="email" required>
+              <input type="email" name="email" required title="email">
             </div>
 
           </div>
@@ -291,22 +291,22 @@
           <div class="grid">
             <div class="form-group">
               <label>Address <span>*</span></label>
-              <textarea name="address" required></textarea>
+              <textarea name="address" title="address" required></textarea>
             </div>
 
             <div class="form-group">
               <label>City<span>*</span></label>
-              <input type="text" name="city" required>
+              <input type="text" name="city"  title="city" required>
             </div>
 
             <div class="form-group">
               <label>District<span>*</span></label>
-              <input type="text" name="district" required>
+              <input type="text" name="district" title="district" required>
             </div>
 
             <div class="form-group">
               <label>State<span>*</span></label>
-              <select name="state" required>
+              <select name="state" required title="state">
                 <option value="">Select state</option>
                 <option>Andhra Pradesh</option>
                 <option>Telangana</option>
@@ -323,12 +323,12 @@
 
             <div class="form-group">
               <label>PIN Code<span>*</span></label>
-              <input type="text" name="pin" required>
+              <input type="text" name="pin" required title="pin">
             </div>
 
             <div class="form-group">
               <label>Country<span>*</span></label>
-              <select name="country" required>
+              <select name="country" required title="country">
                 <option value="">Select country</option>
                 <option selected>India</option>
                 <option>Other</option>
@@ -343,7 +343,7 @@
           <div class="grid">
             <div class="form-group">
               <label>Highest Degree<span>*</span></label>
-              <select name="degreeLevel" required>
+              <select name="degreeLevel" required title="degreeLevel">
                 <option value="">Select degree</option>
                 <option>B.A.</option>
                 <option>B.Sc.</option>
@@ -358,17 +358,17 @@
 
             <div class="form-group">
               <label>Specialization<span>*</span></label>
-              <input type="text" name="specialization" required>
+              <input type="text" name="specialization" required title="specialization">
             </div>
 
             <div class="form-group">
               <label>University<span>*</span></label>
-              <input type="text" name="university" required>
+              <input type="text" name="university" required title="university">
             </div>
 
             <div class="form-group">
               <label>Passing Year<span>*</span></label>
-              <select name="passingYear" id="passingYear" required>
+              <select name="passingYear" id="passingYear" required title="passingYear>
                 <option value="">Select year</option>
                 <!-- JS will generate values dynamically -->
               </select>
@@ -376,7 +376,7 @@
 
             <div class="form-group">
               <label>Study Mode<span>*</span></label>
-              <select name="studyMode" required>
+              <select name="studyMode" required title="studyMode">
                 <option value="">Select</option>
                 <option>Regular</option>
                 <option>Part-time</option>
@@ -386,7 +386,7 @@
 
             <div class="form-group">
               <label>Percentage / CGPA<span>*</span></label>
-              <input type="text" name="percentage" required>
+              <input type="text" name="percentage" title="percentage" required>
             </div>
           </div>
         </fieldset>
@@ -397,7 +397,7 @@
           <div class="grid">
             <div class="form-group">
               <label>Employment Status</label>
-              <select name="employmentStatus">
+              <select name="employmentStatus" title="employmentStatus">
                 <option value="">Select</option>
                 <option>Employed</option>
                 <option>Self-Employed</option>
@@ -408,17 +408,17 @@
 
             <div class="form-group">
               <label>Organisation</label>
-              <input type="text" name="organisation">
+              <input type="text" name="organisation" title="organisation">
             </div>
 
             <div class="form-group">
               <label>Designation</label>
-              <input type="text" name="designation">
+              <input type="text" name="designation" title="designation">
             </div>
 
             <div class="form-group">
               <label>Sector</label>
-              <select name="sector">
+              <select  title="sector" name="sector">
                 <option value="">Select</option>
                 <option>Judiciary</option>
                 <option>Law Firm</option>
@@ -434,7 +434,7 @@
 
             <div class="form-group">
               <label>Experience</label>
-              <select name="experience">
+              <select title="experience" name="experience">
                 <option value="">Select</option>
                 <option>0–1 years</option>
                 <option>1–3 years</option>
@@ -446,12 +446,12 @@
           </div>
         </fieldset>
 
-        <!-- <fieldset>
+        <fieldset>
           <legend>5. Statement of Purpose</legend>
 
           <div class="form-group">
             <label>SOP<span>*</span></label>
-            <textarea name="sop" required></textarea>
+            <textarea title="sop" name="sop" required></textarea>
           </div>
 
           <div class="form-group">
@@ -462,54 +462,53 @@
               <label><input type="checkbox" name="commMode" value="SMS"> SMS</label>
             </div>
           </div>
-        </fieldset> -->
-<!-- 
+        </fieldset>
         <fieldset>
           <legend>6. Upload Documents</legend>
 
           <div class="grid">
             <div class="form-group">
               <label>Photograph<span>*</span></label>
-              <input type="file" name="photo" accept="image/<span>*</span>" required>
+              <input title="photo" type="file" name="photo" accept="image/*" required>
             </div>
 
             <div class="form-group">
               <label>ID Proof<span>*</span></label>
-              <input type="file" name="idProof" accept=".pdf, image/<span>*</span>" required>
+              <input title="idProof" type="file" name="idProof" accept=".pdf, image/*" required>
             </div>
 
             <div class="form-group">
               <label>Degree Certificate<span>*</span></label>
-              <input type="file" name="degreeCert" accept=".pdf" required>
+              <input title="degreeCert" type="file" name="degreeCert" accept=".pdf" required>
             </div>
 
             <div class="form-group">
               <label>Marksheets<span>*</span></label>
-              <input type="file" name="marksheets" accept=".pdf" required>
+              <input title="Marksheets" type="file" name="marksheets" accept=".pdf" required>
             </div>
 
             <div class="form-group">
               <label>Supporting Documents (optional)</label>
-              <input type="file" name="supportDocs" multiple>
+              <input title="supportDocs" type="file" name="supportDocs" multiple>
             </div>
           </div>
-        </fieldset> -->
+        </fieldset>
 
         <fieldset>
           <legend>7. Declarations & Payment</legend>
 
           <div class="checkbox-item">
-            <input type="checkbox" name="declaration" value="truth" required>
+            <input type="checkbox" name="declaration" value="truth" required title="declaration">
             <label>I declare that all information furnished is true.</label>
           </div>
 
           <div class="checkbox-item">
-            <input type="checkbox" name="declaration" value="rules" required>
+            <input type="checkbox" name="declaration" value="rules" required title="declaration">
             <label>I agree to abide by programme rules.</label>
           </div>
 
           <div class="checkbox-item">
-            <input type="checkbox" name="declaration" value="fee" required>
+            <input type="checkbox" name="declaration" value="fee" required title="declaration">
             <label>I understand the application fee is non-refundable.</label>
           </div>
 
