@@ -1,0 +1,16 @@
+[Unit]
+Description=PGCPATIL Fullstack Node App
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/pgcpatil-fullstack
+EnvironmentFile=/opt/pgcpatil-fullstack/.env
+ExecStart=/usr/bin/node /opt/pgcpatil-fullstack/server.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
