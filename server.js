@@ -18,7 +18,7 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 // const Mailer = require("mailer");
-const mailer = require("./mailer");
+const Mailer = require("./mailer");
 
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
