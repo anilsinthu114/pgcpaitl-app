@@ -47,7 +47,7 @@ function layout(content) {
 
       <!-- HEADER -->
       <div style="text-align:center;margin-bottom:20px;">
-        <img src="https://jntugv.edu.in/assets/logo.png" alt="JNTU-GV Logo"
+        <img src="https://jntugv.edu.in/static/media/jntugvcev.b33bb43b07b2037ab043.jpg" alt="JNTU-GV Logo"
           style="height:70px;margin-bottom:10px;">
         <h2 style="margin:0;font-size:20px;color:#003c7a;font-weight:700">
           Jawaharlal Nehru Technological University – Gurajada Vizianagaram
@@ -93,7 +93,7 @@ function announcementBlock() {
     </p>
     <p style="margin:6px 0;font-size:14px;color:#5a4635;">
       The <strong>₹1,000/- non-refundable registration fee</strong> payment link will be activated shortly.
-      Email/SMS notification will follow once the payment system is live.
+      Email notification will follow once the payment system is live.
     </p>
     <p style="margin:6px 0;font-size:14px;color:#5a4635;font-weight:600;">
       All applications remain provisional until fee payment is completed.
@@ -140,6 +140,7 @@ function applicantSubmissionEmail(app, id) {
         <tr><td><b>Email</b></td><td>${escapeHtml(app.email)}</td></tr>
         <tr><td><b>Mobile</b></td><td>${escapeHtml(app.mobile)}</td></tr>
         <tr><td><b>Qualification</b></td><td>${escapeHtml(app.degreeLevel)}</td></tr>
+        <tr><td><b>Institution </b></td><td>${escapeHtml(app.institution)}</td></tr>
         <tr><td><b>University</b></td><td>${escapeHtml(app.university)}</td></tr>
         <tr><td><b>Passing Year</b></td><td>${escapeHtml(app.passingYear)}</td></tr>
       </table>
