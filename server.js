@@ -1,8 +1,10 @@
 /*******************************
  * server.js
- * MySQL-only backend for updated PGCPAITL form
+ * MySQL backend for PGCPAITL form
+ * FILE PROCESSING COMMENTED OUT (but kept for future)
  *******************************/
 require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
@@ -13,8 +15,10 @@ const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const nodemailer = require('nodemailer');
 const mysql = require('mysql2/promise');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+// const Mailer = require("mailer");
+const mailer = require("./mailer");
 
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -25,7 +29,7 @@ const ALLOWED_MIMES = (process.env.ALLOWED_MIMES || 'application/pdf,image/jpeg,
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
-// --- MySQL pool
+// --- MySQL pool ---
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
   port: parseInt(process.env.DB_PORT || '3306', 10),
@@ -36,21 +40,21 @@ const pool = mysql.createPool({
   connectionLimit: 10
 });
 
-// ensure uploads dir exists
+// ensure uploads directory exists
 fsSync.mkdirSync(FILE_BASE, { recursive: true });
 
 // nodemailer transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587', 10),
   secure: (process.env.SMTP_SECURE === 'true'),
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+    user: process.env.SMTP_USER || 'applicationspgcpaitl@gmail.com',
+    pass: process.env.SMTP_PASS || 'jqbsayhsvfmdefyg'
   }
 });
 
-// multer memory storage & filter
+// === Multer configuration (file validation active) ===
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE },
@@ -62,322 +66,588 @@ const upload = multer({
   }
 });
 
+// For now: allow incoming files but DO NOT PROCESS THEM
+const multerMiddleware = upload.any();
+
 const app = express();
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(rateLimit({ windowMs: 60*1000, max: 120 }));
+app.use(rateLimit({ windowMs: 60 * 1000, max: 120 }));
+app.set("trust proxy", 1);
 
-app.set('trust proxy', 'loopback');
-
-// If behind real domain NGINX:
-app.set('trust proxy', 1);
-// serve static public (index.html and form-submit.js)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ---------- Utility functions ----------
-function escapeHtml(str){ if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,"&#039;"); }
-function buildOrigin(req){
-  const proto = req.get('x-forwarded-proto') || req.protocol;
-  return `${proto}://${req.get('host')}`;
+// ---------- Utility ----------
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-// ---------- Admin helper (create default admin if none) ----------
-async function ensureDefaultAdmin(){
-  const [rows] = await pool.query('SELECT COUNT(*) AS c FROM admin_users');
+function buildOrigin(req) {
+  const proto = req.get("x-forwarded-proto") || req.protocol;
+  return `${proto}://${req.get("host")}`;
+}
+
+// ---------- Auto-create default admin ----------
+async function ensureDefaultAdmin() {
+  const [rows] = await pool.query("SELECT COUNT(*) AS c FROM admin_users");
   if (rows[0].c === 0) {
-    const user = process.env.ADMIN_DEFAULT_USER || 'admin';
-    const pass = process.env.ADMIN_DEFAULT_PASS || 'Admin@1234';
+    const user = process.env.ADMIN_DEFAULT_USER || "admin";
+    const pass = process.env.ADMIN_DEFAULT_PASS || "Admin@1234";
     const hash = await bcrypt.hash(pass, 10);
-    await pool.query('INSERT INTO admin_users (username,password_hash) VALUES (?,?)', [user, hash]);
-    console.log('Default admin created:', user);
+    await pool.query("INSERT INTO admin_users (username,password_hash) VALUES (?,?)", [user, hash]);
+    console.log("Default admin user created:", user);
   }
 }
 ensureDefaultAdmin().catch(console.error);
 
 // ---------- Admin auth ----------
-function adminAuth(req, res, next){
+function adminAuth(req, res, next) {
   const h = req.headers.authorization;
-  if (!h) return res.status(401).json({ ok:false, error:'no auth' });
-  const [scheme, token] = h.split(' ');
-  if (scheme !== 'Bearer') return res.status(401).json({ ok:false, error:'bad auth' });
+  if (!h) return res.status(401).json({ ok: false, error: "no auth" });
+  const [scheme, token] = h.split(" ");
+  if (scheme !== "Bearer") return res.status(401).json({ ok: false, error: "bad auth" });
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    req.user = payload;
+    req.user = jwt.verify(token, JWT_SECRET);
     next();
-  } catch(e) {
-    return res.status(401).json({ ok:false, error:'invalid token' });
+  } catch {
+    return res.status(401).json({ ok: false, error: "invalid token" });
   }
 }
 
-// ---------- Helper: insert application (MySQL) ----------
-async function insertApplication(conn, appObj) {
-  const sql = `INSERT INTO applications
+// ---------- Insert application ----------
+async function insertApplication(conn, obj) {
+  const sql = `
+    INSERT INTO applications
     (fullName,parentName,dob,gender,category,nationality,aadhaar,mobile,whatsapp,email,address,city,district,state,pin,country,
      degreeLevel,specialization,university,passingYear,studyMode,percentage,employmentStatus,organisation,designation,sector,experience,
      sop,commMode,declarations,submitted_at,status)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)`;
-  const commModeStr = Array.isArray(appObj.commMode) ? appObj.commMode.join(',') : (appObj.commMode || null);
-  const declarationsStr = Array.isArray(appObj.declaration) ? JSON.stringify(appObj.declaration) : JSON.stringify([]);
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),'submitted')
+  `;
+
+  const comm = Array.isArray(obj.commMode) ? obj.commMode.join(",") : null;
+  const dec = JSON.stringify(obj.declaration || []);
+
   const params = [
-    appObj.fullName, appObj.parentName, appObj.dob, appObj.gender, appObj.category, appObj.nationality, appObj.aadhaar || null,
-    appObj.mobile, appObj.whatsapp || null, appObj.email, appObj.address, appObj.city, appObj.district, appObj.state, appObj.pin, appObj.country,
-    appObj.degreeLevel, appObj.specialization, appObj.university, appObj.passingYear ? parseInt(appObj.passingYear,10) : null,
-    appObj.studyMode, appObj.percentage || null, appObj.employmentStatus || null, appObj.organisation || null, appObj.designation || null,
-    appObj.sector || null, appObj.experience || null, appObj.sop, commModeStr, declarationsStr, 'submitted'
+    obj.fullName, obj.parentName, obj.dob, obj.gender, obj.category, obj.nationality, obj.aadhaar || null,
+    obj.mobile, obj.whatsapp || null, obj.email, obj.address, obj.city, obj.district, obj.state, obj.pin, obj.country,
+    obj.degreeLevel, obj.specialization, obj.university, parseInt(obj.passingYear, 10) || null,
+    obj.studyMode, obj.percentage, obj.employmentStatus || null, obj.organisation || null,
+    obj.designation || null, obj.sector || null, obj.experience || null,
+    obj.sop, comm, dec
   ];
+
   const [res] = await conn.query(sql, params);
   return res.insertId;
 }
 
-// ---------- Multer fields (match your HTML) ----------
-const multerMiddleware = upload.fields([
-  { name: 'photo', maxCount: 1 },
-  { name: 'idProof', maxCount: 1 },
-  { name: 'degreeCert', maxCount: 1 },
-  { name: 'marksheets', maxCount: 1 },
-  { name: 'supportDocs', maxCount: 10 }
-]);
 
-// ---------- Routes ----------
+//  // 1️⃣ ANNOUNCEMENT TEMPLATE (sent to applicant)
+//         const announcementEmail = `
+// <div style="padding:16px;border-left:5px solid #f39c12;background:#fff7ed;border-radius:8px;font-family:Arial;">
+//   <h2 style="color:#b45309;margin:0 0 10px 0;">Important Information for Applicants</h2>
+//   <p>Applicants may submit the Online Application Form through the portal at present.</p>
 
-// health
-app.get('/health', (req, res) => res.json({ ok:true }));
+//   <p>
+//     The <strong>₹1,000/- non-refundable registration fee</strong> payment link 
+//     will be activated shortly on the same portal.  
+//     You will receive automatic <strong>Email / SMS notifications</strong> once the payment gateway is live.
+//   </p>
 
-// admin login
+//   <p><strong>All applications shall remain provisional until payment is completed.</strong></p>
+//   <p>The registration fee is strictly non-refundable.</p>
+
+//   <p style="margin-top:10px;">
+//     For official updates, visit:  
+//     <a href="https://pgcpaitl.jntugv.edu.in" target="_blank">pgcpaitl.jntugv.edu.in</a>
+//   </p>
+// </div>
+// `;
+
+
+//         // 2️⃣ APPLICATION SUBMISSION ACKNOWLEDGEMENT — applicant
+//         const applicantSubmissionEmail = (appObj, applicationId) => `
+// ${announcementEmail}
+
+// <h2 style="color:#004c97;font-family:Arial;">Your Application is Received</h2>
+// <p>Dear <strong>${escapeHtml(appObj.fullName)}</strong>,</p>
+
+// <p>Your application has been successfully submitted.</p>
+
+// <p><strong>Application ID:</strong> ${applicationId}</p>
+
+// <h3 style="color:#004c97;margin-top:20px;">Applicant Details</h3>
+// <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:Arial;">
+//   <tr><td><b>Name:</b></td><td>${escapeHtml(appObj.fullName)}</td></tr>
+//   <tr><td><b>Father/Mother:</b></td><td>${escapeHtml(appObj.parentName)}</td></tr>
+//   <tr><td><b>Email:</b></td><td>${escapeHtml(appObj.email)}</td></tr>
+//   <tr><td><b>Mobile:</b></td><td>${escapeHtml(appObj.mobile)}</td></tr>
+//   <tr><td><b>Qualification:</b></td><td>${escapeHtml(appObj.degreeLevel)}</td></tr>
+//   <tr><td><b>Specialization:</b></td><td>${escapeHtml(appObj.specialization)}</td></tr>
+//   <tr><td><b>University:</b></td><td>${escapeHtml(appObj.university)}</td></tr>
+//   <tr><td><b>Year of Passing:</b></td><td>${escapeHtml(appObj.passingYear)}</td></tr>
+// </table>
+
+// <p style="margin-top:12px;">
+// You will be notified once the payment portal is activated.
+// </p>
+
+// <p>Regards,<br>
+// <strong>PGCPAITL Admissions Team</strong><br>
+// JNTU-GV & DSNLU</p>
+// `;
+
+
+//         // 3️⃣ NOTIFICATION TO AUTHORITY — admin
+//         const adminNotificationEmail = (appObj, applicationId) => `
+// <h2 style="color:#004c97;font-family:Arial;">New PGCPAITL Application Submitted</h2>
+
+// <p>A new application has been received.</p>
+
+// <p><strong>Application ID:</strong> ${applicationId}</p>
+
+// <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:Arial;">
+//   <tr><td><b>Name:</b></td><td>${escapeHtml(appObj.fullName)}</td></tr>
+//   <tr><td><b>Email:</b></td><td>${escapeHtml(appObj.email)}</td></tr>
+//   <tr><td><b>Mobile:</b></td><td>${escapeHtml(appObj.mobile)}</td></tr>
+//   <tr><td><b>Qualification:</b></td><td>${escapeHtml(appObj.degreeLevel)}</td></tr>
+//   <tr><td><b>Status:</b></td><td>submitted</td></tr>
+// </table>
+// `;
+
+
+//         // 4️⃣ STATUS UPDATE EMAIL (to applicant)
+//         const statusUpdateEmail = (appObj, newStatus) => `
+// <h2 style="color:#004c97;font-family:Arial;">Your Application Status Has Changed</h2>
+// <p>Dear ${escapeHtml(appObj.fullName)},</p>
+
+// <p>Your PGCPAITL application status has been updated.</p>
+
+// <p><strong>New Status:</strong> ${newStatus}</p>
+
+// <p>You may log in to the portal for details.</p>
+
+// <p>Regards,<br>
+// PGCPAITL Admissions Team</p>
+// `;
+
+
+//         // 5️⃣ PAYMENT ACTIVATION EMAIL (to applicant)
+//         const paymentActivationEmail = (appObj, applicationId) => `
+// <h2 style="color:#004c97;font-family:Arial;">Registration Fee Payment Activated</h2>
+
+// <p>Dear ${escapeHtml(appObj.fullName)},</p>
+
+// <p>Your application (ID <strong>${applicationId}</strong>) is now ready for payment.</p>
+
+// <p>Please pay the <strong>₹1,000 non-refundable registration fee</strong> to proceed with the admission process.</p>
+
+// <p><a href="https://pgcpaitl.jntugv.edu.in/pay" 
+//    style="padding:10px 18px;background:#004c97;color:#fff;border-radius:6px;text-decoration:none;">
+//    Pay Registration Fee
+// </a></p>
+
+// <p>Regards,<br>PGCPAITL Admissions Team</p>
+// `;
+
+
+// ===================================================================
+// 🔵 APPLICATION SUBMIT — FILE UPLOAD LOGIC COMMENTED (NOT REMOVED)
+// ===================================================================
 app.post(
-  '/admin/login',
-  body('username').isString(),
-  body('password').isString(),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ ok: false, error: 'Invalid input' });
-    }
-
-    const { username, password } = req.body;
-    console.log('Admin login attempt:', username);
-    try {
-      const [rows] = await pool.query('SELECT * FROM admin_users WHERE username=?', [username]);
-      if (rows.length === 0) {
-        return res.status(401).json({ ok: false, error: 'Invalid credentials' });
-      }
-
-      const user = rows[0];
-      console.log('User found:', user.username);
-      const ok = await bcrypt.compare(password, user.password_hash);
-      if (!ok) {
-        return res.status(401).json({ ok: false, error: 'Invalid credentials' });
-      }
-
-      const token = jwt.sign(
-        { id: user.id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-      );
-
-      res.json({ ok: true, token });
-      console.log('Admin login successful:', username);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ ok: false, error: 'Server error' });
-    }
-  }
-);
-
-// application submit (match new form)
-app.post('/application/submit',
-  multerMiddleware,
-  // basic validation for required fields as per HTML
-  body('fullName').notEmpty(),
-  body('parentName').notEmpty(),
-  body('dob').notEmpty(),
-  body('gender').notEmpty(),
-  body('category').notEmpty(),
-  body('nationality').notEmpty(),
-  body('mobile').notEmpty(),
-  body('email').isEmail(),
-  body('address').notEmpty(),
-  body('city').notEmpty(),
-  body('district').notEmpty(),
-  body('state').notEmpty(),
-  body('pin').notEmpty(),
-  body('country').notEmpty(),
-  body('degreeLevel').notEmpty(),
-  body('specialization').notEmpty(),
-  body('university').notEmpty(),
-  body('passingYear').notEmpty(),
-  body('studyMode').notEmpty(),
-  body('percentage').notEmpty(),
-  body('sop').notEmpty(),
+  "/application/submit",
+  multerMiddleware, // accept files but DO NOT PROCESS THEM
+  // === VALIDATION ===
+  body("fullName").notEmpty(),
+  body("parentName").notEmpty(),
+  body("dob").notEmpty(),
+  body("gender").notEmpty(),
+  body("category").notEmpty(),
+  body("nationality").notEmpty(),
+  body("mobile").notEmpty(),
+  body("email").isEmail(),
+  body("address").notEmpty(),
+  body("city").notEmpty(),
+  body("district").notEmpty(),
+  body("state").notEmpty(),
+  body("pin").notEmpty(),
+  body("country").notEmpty(),
+  body("degreeLevel").notEmpty(),
+  body("specialization").notEmpty(),
+  body("university").notEmpty(),
+  body("passingYear").notEmpty(),
+  body("studyMode").notEmpty(),
+  body("percentage").notEmpty(),
+  body("sop").notEmpty(),
   async (req, res) => {
     try {
-      // show debug logs (temporary)
-      console.log('REQ.BODY keys:', Object.keys(req.body));
-      if (req.files) {
-        Object.entries(req.files).forEach(([k,v]) => console.log('FILES', k, 'count=', v.length));
-      }
+      console.log("REQ.BODY:", req.body);
+      console.log("REQ.FILES:", req.files?.length || 0, "files received");
 
       const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ ok:false, errors: errors.array() });
-      }
+      if (!errors.isEmpty()) return res.status(400).json({ ok: false, errors: errors.array() });
 
-      const data = req.body;
-      // normalize arrays: declaration[], commMode may come as multiple fields
-      // depending on client they may appear as "declaration[]" or "declaration"
-      const declarations = data['declaration[]'] || data.declaration || [];
-      const commMode = [].concat(data['commMode'] || data.commMode || []);
+      // normalize arrays
+      const declarations = Array.isArray(req.body.declaration)
+        ? req.body.declaration
+        : req.body.declaration ? [req.body.declaration] : [];
 
-      // create transaction
+      const commMode = Array.isArray(req.body.commMode)
+        ? req.body.commMode
+        : req.body.commMode ? [req.body.commMode] : [];
+
+      const appObj = {
+        fullName: req.body.fullName,
+        parentName: req.body.parentName,
+        dob: req.body.dob,
+        gender: req.body.gender,
+        category: req.body.category,
+        nationality: req.body.nationality,
+        aadhaar: req.body.aadhaar || null,
+        mobile: req.body.mobile,
+        whatsapp: req.body.whatsapp || null,
+        email: req.body.email,
+        address: req.body.address,
+        city: req.body.city,
+        district: req.body.district,
+        state: req.body.state,
+        pin: req.body.pin,
+        country: req.body.country,
+        degreeLevel: req.body.degreeLevel,
+        specialization: req.body.specialization,
+        university: req.body.university,
+        passingYear: req.body.passingYear,
+        studyMode: req.body.studyMode,
+        percentage: req.body.percentage,
+        employmentStatus: req.body.employmentStatus || null,
+        organisation: req.body.organisation || null,
+        designation: req.body.designation || null,
+        sector: req.body.sector || null,
+        experience: req.body.experience || null,
+        sop: req.body.sop,
+        commMode,
+        declaration: declarations
+      };
+
       const conn = await pool.getConnection();
       try {
         await conn.beginTransaction();
 
-        const appObj = {
-          fullName: data.fullName,
-          parentName: data.parentName,
-          dob: data.dob,
-          gender: data.gender,
-          category: data.category,
-          nationality: data.nationality,
-          aadhaar: data.aadhaar || null,
-          mobile: data.mobile,
-          whatsapp: data.whatsapp || null,
-          email: data.email,
-          address: data.address,
-          city: data.city,
-          district: data.district,
-          state: data.state,
-          pin: data.pin,
-          country: data.country,
-          degreeLevel: data.degreeLevel,
-          specialization: data.specialization,
-          university: data.university,
-          passingYear: data.passingYear,
-          studyMode: data.studyMode,
-          percentage: data.percentage,
-          employmentStatus: data.employmentStatus || null,
-          organisation: data.organisation || null,
-          designation: data.designation || null,
-          sector: data.sector || null,
-          experience: data.experience || null,
-          sop: data.sop,
-          commMode: commMode,
-          declaration: Array.isArray(declarations) ? declarations : [declarations]
-        };
-
         const applicationId = await insertApplication(conn, appObj);
 
-        // store files from req.files
+        // --------------------------------------------------------
+        // 🔶 FILE UPLOAD STORAGE (COMMENTED OUT)
+        // --------------------------------------------------------
+        /*
         const fileTypesMap = {
-          photo: 'photo',
-          idProof: 'id_proof',
-          degreeCert: 'degree_certificate',
-          marksheets: 'marksheets',
-          supportDocs: 'support_docs'
+          photo: "photo",
+          idProof: "id_proof",
+          degreeCert: "degree_certificate",
+          marksheets: "marksheets",
+          supportDocs: "support_docs"
         };
 
-        const savedFiles = []; // for email attachments
-
-        for (const fieldName of Object.keys(fileTypesMap)) {
-          const files = req.files?.[fieldName];
-          if (!files) continue;
+        if (req.files && req.files.length > 0) {
           const dir = path.join(FILE_BASE, 'applications', String(applicationId));
           await fs.mkdir(dir, { recursive: true });
-          for (const f of files) {
-            const ext = path.extname(f.originalname) || '';
-            const safeName = `${fileTypesMap[fieldName]}_${Date.now()}_${Math.random().toString(36).slice(2,8)}${ext}`;
+
+          for (const f of req.files) {
+            if (!fileTypesMap[f.fieldname]) continue;
+
+            const ext = path.extname(f.originalname);
+            const safeName = `${fileTypesMap[f.fieldname]}_${Date.now()}_${Math.random()
+              .toString(36)
+              .slice(2, 8)}${ext}`;
             const storedPath = path.join(dir, safeName);
+
             await fs.writeFile(storedPath, f.buffer, { mode: 0o640 });
+
             await conn.query(
-              `INSERT INTO application_files (application_id, type, original_name, stored_name, stored_path, mime, size_bytes)
-               VALUES (?, ?, ?, ?, ?, ?, ?)`,
-               [applicationId, fileTypesMap[fieldName], f.originalname, safeName, storedPath, f.mimetype, f.size]
+              `INSERT INTO application_files (application_id,type,original_name,stored_name,stored_path,mime,size_bytes)
+               VALUES (?,?,?,?,?,?,?)`,
+               [
+                 applicationId,
+                 fileTypesMap[f.fieldname],
+                 f.originalname,
+                 safeName,
+                 storedPath,
+                 f.mimetype,
+                 f.size
+               ]
             );
-            savedFiles.push({ path: storedPath, filename: f.originalname, contentType: f.mimetype });
           }
         }
+        */
+        // --------------------------------------------------------
+        // END FILE BLOCK
+        // --------------------------------------------------------
 
         await conn.commit();
 
-        // send email (with attachments)
+        /***************************************************************
+         * EMAIL TEMPLATES (ALL 5 INCLUDED)
+         ***************************************************************/
+
+
+        // send email without attachments
         try {
-          const html = `
-            <h3>New Application #${applicationId}</h3>
-            <p><b>Name:</b> ${escapeHtml(appObj.fullName)}</p>
-            <p><b>Email:</b> ${escapeHtml(appObj.email)}</p>
-            <p><b>Mobile:</b> ${escapeHtml(appObj.mobile)}</p>
-            <p><b>Qualification:</b> ${escapeHtml(appObj.degreeLevel)} – ${escapeHtml(appObj.university)}</p>
-            <p><b>Declarations:</b> ${JSON.stringify(appObj.declaration)}</p>
-          `;
-          await transporter.sendMail({
-            from: process.env.EMAIL_FROM,
-            to: data.email,
-            cc: process.env.EMAIL_CC,
-            subject: `PGCPAITL Application #${applicationId} — ${appObj.fullName}`,
-            html,
-            attachments: savedFiles // nodemailer will attach files by path
-          });
+          await Mailer.sendMail(
+            appObj.email,
+            `PGCPAITL Application Received – ID ${applicationId}`,
+            Mailer.applicantSubmissionEmail(appObj, applicationId),
+            process.env.EMAIL_CC
+          );
         } catch (mailErr) {
-          console.error('Email send failed:', mailErr?.message || mailErr);
+          console.error("Applicant mail send error:", mailErr.message);
         }
 
-        const origin = buildOrigin(req);
-        return res.status(201).json({ ok:true, application_id: applicationId, redirect: origin + '/thank-you.html' });
-      } catch (err) {
-        await conn.rollback().catch(()=>{});
-        console.error('DB transaction error:', err);
-        return res.status(500).json({ ok:false, error: err.message });
+        try {
+         await Mailer.sendMail(
+          process.env.EMAIL_TO,
+          `New PGCPAITL Application Submitted – ID ${applicationId}`,
+          Mailer.adminNotificationEmail(appObj, applicationId)
+          );
+        }
+        catch (adminMailErr) {
+          console.error("Admin mail send error:", adminMailErr.message);
+        }
+
+        return res.status(201).json({
+          ok: true,
+          application_id: applicationId,
+          redirect: buildOrigin(req) + "/thank-you.html"
+        });
+
+      } catch (dbErr) {
+        await conn.rollback();
+        return res.status(500).json({ ok: false, error: dbErr.message });
       } finally {
         conn.release();
       }
+
     } catch (err) {
-      console.error('Submit route error:', err);
-      return res.status(500).json({ ok:false, error: err.message });
+      console.error("Submit route error:", err);
+      return res.status(500).json({ ok: false, error: err.message });
     }
   }
 );
 
-// Admin endpoints (example: list, get)
-app.get('/application/list', adminAuth, async (req,res) => {
-  const [rows] = await pool.query('SELECT id, fullName, email, mobile, degreeLevel, status, submitted_at FROM applications ORDER BY submitted_at DESC LIMIT 200');
-  res.json({ ok:true, items: rows });
+// ===================================================================
+// ADMIN ENDPOINTS
+// ===================================================================
+
+// login
+app.post("/admin/login", body("username").isString(), body("password").isString(), async (req, res) => {
+  const { username, password } = req.body;
+  const [rows] = await pool.query("SELECT * FROM admin_users WHERE username=?", [username]);
+  if (rows.length === 0) return res.status(401).json({ ok: false, error: "invalid" });
+
+  const valid = await bcrypt.compare(password, rows[0].password_hash);
+  if (!valid) return res.status(401).json({ ok: false, error: "invalid" });
+
+  const token = jwt.sign({ id: rows[0].id, username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+  res.json({ ok: true, token });
 });
 
-app.get('/application/:id', adminAuth, async (req,res) => {
+// list applications
+app.get("/application/list", adminAuth, async (req, res) => {
+  const [rows] = await pool.query(`
+    SELECT id, fullName, email, mobile, degreeLevel, status, submitted_at
+    FROM applications
+    ORDER BY submitted_at DESC
+    LIMIT 200
+  `);
+  res.json({ ok: true, items: rows });
+});
+
+// get details
+app.get("/application/:id", adminAuth, async (req, res) => {
   const id = Number(req.params.id);
-  const [apps] = await pool.query('SELECT * FROM applications WHERE id=?', [id]);
-  if (apps.length === 0) return res.status(404).json({ ok:false, error:'not found' });
-  const [files] = await pool.query('SELECT id,type,original_name,mime,size_bytes,uploaded_at FROM application_files WHERE application_id=?', [id]);
-  res.json({ ok:true, application: apps[0], files });
+
+  const [apps] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
+  if (apps.length === 0) return res.status(404).json({ ok: false, error: "not found" });
+
+  // file listing disabled now — return empty array
+  res.json({ ok: true, application: apps[0], files: [] });
 });
 
-app.put('/application/:id/status', adminAuth, async (req, res) => {
+// update status
+app.put("/application/:id/status", adminAuth, async (req, res) => {
   const id = Number(req.params.id);
   const { status } = req.body;
 
-  if (!["submitted", "reviewed", "approved", "rejected"].includes(status)) {
+  // Allowed values
+  if (!["submitted", "reviewing", "accepted", "rejected"].includes(status)) {
     return res.status(400).json({ ok: false, error: "Invalid status" });
   }
 
-  await pool.query("UPDATE applications SET status=? WHERE id=?", [status, id]);
-  return res.json({ ok: true });
+  try {
+    // Fetch applicant details for email
+    const [apps] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
+    if (apps.length === 0) return res.status(404).json({ ok: false, error: "not found" });
+
+    const appObj = apps[0];
+
+    // Update DB
+    await pool.query("UPDATE applications SET status=? WHERE id=?", [status, id]);
+
+    /***********************
+     * SEND STATUS EMAIL
+     ***********************/
+    try {
+      await Mailer.sendMail(
+        appObj.email,
+        `PGCPAITL Application Status Updated – ID ${id}`,
+        Mailer.statusUpdateEmail(appObj, status)
+      );
+
+
+      // // Optional admin copy
+      // await transporter.sendMail({
+      //   from: process.env.EMAIL_FROM,
+      //   to: process.env.EMAIL_TO,
+      //   subject: `Application #${id} status changed to ${status}`,
+      //   html: `<p>Status updated to <b>${status}</b> for applicant <b>${appObj.fullName}</b>.</p>`
+      // });
+
+    } catch (mailErr) {
+      console.error("Status update email error:", mailErr.message);
+    }
+
+    return res.json({ ok: true });
+
+  } catch (err) {
+    console.error("Update status error:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
-app.get('/application/file/:fileId', adminAuth, async (req,res) => {
-  const fileId = Number(req.params.fileId);
-  const [rows] = await pool.query('SELECT * FROM application_files WHERE id=?', [fileId]);
-  if (rows.length === 0) return res.status(404).send('not found');
-  const f = rows[0];
-  res.setHeader('Content-Type', f.mime || 'application/octet-stream');
-  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(f.original_name)}"`);
-  return res.sendFile(path.resolve(f.stored_path));
+
+app.post("/application/:id/payment-activate", adminAuth, async (req, res) => {
+  const id = Number(req.params.id);
+
+  try {
+    // get applicant
+    const [apps] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
+    if (apps.length === 0) return res.status(404).json({ ok: false, error: "not found" });
+
+    const appObj = apps[0];
+
+    // SEND PAYMENT ACTIVATION EMAIL
+    try {
+      await Mailer.sendMail(
+        appObj.email,
+        `PGCPAITL – Registration Fee Payment Activated`,
+        Mailer.paymentActivationEmail(appObj, id)
+      );
+
+    } catch (mailErr) {
+      console.error("Payment activation email error:", mailErr.message);
+    }
+
+    return res.json({ ok: true, message: "Payment email sent" });
+
+  } catch (err) {
+    console.error("Payment route error:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
-// Serve dashboard only for authenticated admins
-app.get('/admin/dashboard', adminAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+// ===============================
+// BULK PAYMENT ACTIVATION (Improved UI/UX Email)
+// ===============================
+app.post("/application/payment-activate-all", adminAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, fullName, email FROM applications WHERE email IS NOT NULL"
+    );
+
+    let sent = 0;
+
+    for (const app of rows) {
+      const paymentEmailHtml = `
+      <div style="font-family: Arial, sans-serif; padding:20px; background:#f7f9fc;">
+        <div style="max-width:600px; margin:auto; background:#ffffff; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+          
+          <h2 style="color:#003c7a; text-align:center; margin-top:0;">
+            PGCPAITL – Payment Activation Notice
+          </h2>
+
+          <p style="font-size:15px; color:#333;">
+            Dear <strong>${escapeHtml(app.fullName)}</strong>,
+          </p>
+
+          <p style="font-size:15px; color:#444; line-height:1.6;">
+            We are pleased to inform you that the <strong>₹1,000/- registration fee payment window</strong> 
+            for your PGCPAITL application is now <span style="color:#27ae60; font-weight:bold;">ACTIVE</span>.
+          </p>
+
+          <p style="font-size:15px; color:#444;">
+            Please complete the payment to confirm your application. Applications without payment will remain 
+            <strong>provisional</strong>.
+          </p>
+
+          <div style="text-align:center; margin:25px 0;">
+            <a href="https://dummy-payment-link.pgcpaitl.jntugv.edu.in"
+              style="display:inline-block; background:#004c97; padding:12px 22px; 
+              color:#fff; text-decoration:none; font-size:16px; border-radius:6px;">
+              Proceed to Payment
+            </a>
+          </div>
+
+          <div style="background:#fff7ed; padding:14px; border-left:4px solid #f39c12; border-radius:6px; margin-top:20px;">
+            <strong style="color:#b45309;">Important Notes:</strong>
+            <ul style="margin:10px 0 0 18px; padding:0; color:#5a4a42; font-size:14px; line-height:1.5;">
+              <li>The registration fee is non-refundable.</li>
+              <li>Your application will be processed only after successful payment.</li>
+              <li>This is an automated message — no action is needed if you have already paid.</li>
+            </ul>
+          </div>
+
+          <p style="font-size:15px; margin-top:20px;">
+            Regards,<br>
+            <strong>PGCPAITL Admissions Team</strong><br>
+            JNTU-GV & DSNLU
+          </p>
+
+          <p style="font-size:12px; color:#888; text-align:center; margin-top:30px;">
+            This is an automated notification. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
+      `;
+
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM,
+          to: app.email,
+          subject: "PGCPAITL – Registration Fee Payment Activated",
+          html: paymentEmailHtml
+        });
+
+        sent++;
+      } catch (mailErr) {
+        console.error("Payment email failed for", app.email, mailErr.message);
+      }
+    }
+
+    res.json({ ok: true, count: sent });
+
+  } catch (err) {
+    console.error("Bulk payment activation error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
-app.listen(PORT, HOST, () => console.log(`Server running at http://${HOST}:${PORT}`));
+
+// server start
+app.listen(PORT, HOST, () => {
+  console.log(`SERVER RUNNING → http://${HOST}:${PORT}`);
+});

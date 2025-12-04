@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>PGCPAITL – Online Application Form</title>
@@ -40,7 +41,7 @@
     .card {
       background: #fff;
       border-radius: var(--radius);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
       padding: 24px 24px 32px;
     }
 
@@ -80,8 +81,16 @@
       font-size: 0.9rem;
     }
 
-    .info-item { flex: 1; min-width: 180px; }
-    .info-label { font-weight: 600; color: var(--primary); display: block; }
+    .info-item {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--primary);
+      display: block;
+    }
 
     .steps {
       display: flex;
@@ -110,7 +119,9 @@
       border-color: var(--primary);
     }
 
-    form { margin-top: 8px; }
+    form {
+      margin-top: 8px;
+    }
 
     fieldset {
       border: 1px solid var(--border);
@@ -136,6 +147,7 @@
     .required {
       color: var(--error);
     }
+
     .form-group {
       display: flex;
       flex-direction: column;
@@ -143,7 +155,238 @@
       font-size: 0.9rem;
     }
 
-    input, select, textarea {
+    :root {
+      --primary: #004c97;
+      --primary-light: #e6f0fb;
+      --accent: #f0a500;
+      --border: #d0d7e2;
+      --bg: #f5f7fb;
+      --text: #222;
+      --muted: #666;
+      --error: #c0392b;
+      --radius: 8px;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: var(--primary);
+    }
+
+    header h2 {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Animated Important Banner */
+    .enhanced-banner {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      border-left: 5px solid #f39c12;
+      border-radius: 10px;
+      background: #fff7ed;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(-10px);
+      animation: fadeInSlide .6s ease forwards;
+    }
+
+    @keyframes fadeInSlide {
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .banner-icon {
+      font-size: 2rem;
+    }
+
+    .banner-title {
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 8px;
+    }
+
+    .banner-points {
+      list-style: disc;
+      padding-left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      height: 10px;
+      background: #e3e9f4;
+      border-radius: 50px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 10px;
+      background: var(--primary);
+      transition: width .4s ease;
+    }
+
+    /* Step Indicators */
+    .steps {
+      display: flex;
+      list-style: none;
+      padding: 0;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .steps li {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 50px;
+      background: #fff;
+      border: 1px solid var(--border);
+      font-size: .85rem;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .steps li.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .steps li.completed {
+      background: #0f7d37;
+      color: #fff;
+    }
+
+    /* FORM STEPS */
+    .form-step {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .35s ease;
+    }
+
+    .form-step.active {
+      display: block;
+      opacity: 1;
+      transform: none;
+    }
+
+    fieldset {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+    }
+
+    legend {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    /* input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: .9rem;
+    } */
+
+    .invalid-field {
+      border-color: var(--error) !important;
+      box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25);
+    }
+
+    .error-text {
+      color: var(--error);
+      font-size: .78rem;
+      margin-top: 2px;
+    }
+
+    /* Navigation Buttons */
+    .step-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .step-btn {
+      padding: 10px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .step-btn.disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .btn-bar {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #003766;
+    }
+
+    input,
+    select,
+    textarea {
       padding: 8px 10px;
       border-radius: 4px;
       border: 1px solid var(--border);
@@ -151,22 +394,188 @@
       transition: 0.15s ease;
     }
 
-    input:focus, select:focus, textarea:focus {
+    input:focus,
+    select:focus,
+    textarea:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(0, 76, 151, 0.12);
       outline: none;
     }
 
-    textarea { min-height: 80px; resize: vertical; }
-    .hint { font-size: 0.78rem; color: var(--muted); }
-    .inline { display: flex; gap: 10px; align-items: center; }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
 
-    .checkbox-item { display: flex; align-items: flex-start; gap: 8px; }
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
 
-    .btn-bar { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-    .btn { padding: 10px 18px; border-radius: 999px; cursor: pointer; border: none; }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+    .inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .btn-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    /* Enhanced Notification Banner */
+    .enhanced-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      background: #fff7ed;
+      border-left: 5px solid #f39c12;
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .banner-icon {
+      font-size: 2rem;
+      line-height: 1;
+      color: #c56a00;
+      flex-shrink: 0;
+    }
+
+    .banner-content {
+      flex: 1;
+      font-size: 0.95rem;
+      color: #5a4a42;
+    }
+
+    .banner-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 8px;
+    }
+
+    .banner-points {
+      list-style: disc;
+      margin: 0;
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .banner-points li {
+      line-height: 1.5;
+    }
+
+    .banner-footer {
+      margin-top: 12px;
+      font-weight: 600;
+      color: #6a4400;
+    }
+
+    .banner-footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .banner-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 640px) {
+      .enhanced-banner {
+        flex-direction: column;
+        padding: 14px;
+      }
+
+      .banner-icon {
+        font-size: 1.8rem;
+      }
+
+      .banner-footer {
+        margin-top: 10px;
+      }
+    }
+    .form-header {
+  margin-bottom: 25px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.header-logo img {
+  height: 60px;
+  width: auto;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+}
+
+.header-title h1 {
+  font-size: 1.6rem;
+  margin: 0;
+  color: var(--primary);
+}
+
+.header-title h2 {
+  font-size: 1.05rem;
+  margin: 4px 0 0;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.header-title p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .header-row {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header-logo img {
+    height: 50px;
+    margin-bottom: 8px;
+  }
+}
 
   </style>
 </head>
@@ -175,11 +584,59 @@
   <div class="page">
     <div class="card">
 
-      <header>
-        <h1>PGCPAITL – Online Application Form</h1>
-        <h2>Post Graduate Certificate Programme in Artificial Intelligence, Technology & Law</h2>
-        <p>Offered by JNTU-GV in collaboration with DSNLU</p>
-      </header>
+     <header class="form-header">
+
+  <div class="header-row">
+
+    <!-- LEFT LOGO -->
+    <div class="header-logo left">
+      <img src="jntugv-logo.png" alt="JNTUGV Logo" />
+    </div>
+
+    <!-- CENTER TEXT -->
+    <div class="header-title">
+      <h1>PGCPAITL – Online Application Form</h1>
+      <h2>Post Graduate Certificate Programme in Artificial Intelligence, Technology & Law</h2>
+      <p>Offered by JNTU-GV in collaboration with DSNLU</p>
+    </div>
+
+    <!-- RIGHT LOGO -->
+    <div class="header-logo right">
+      <img src="dsnlu-logo.png" alt="DSNLU Logo" />
+    </div>
+
+  </div>
+
+</header>
+      <!-- BEGIN: IMPROVED IMPORTANT INFORMATION BANNER -->
+      <div class="info-banner enhanced-banner">
+        <div class="banner-icon">
+          ⚠️
+        </div>
+
+        <div class="banner-content">
+          <div class="banner-title">Important Information for Applicants</div>
+
+          <ul class="banner-points">
+            <li>Applicants may submit the online application form through the portal at present.</li>
+            <li>The ₹1,000/- non-refundable registration fee payment link will be activated shortly on the same portal.
+            </li>
+            <li>You will receive an automatic Email/SMS notification once the payment gateway is live.</li>
+            <li>All applications shall remain <strong>provisional</strong> until successful payment of the registration
+              fee.</li>
+            <li>The registration fee is strictly non-refundable.</li>
+          </ul>
+
+          <div class="banner-footer">
+            For official updates, visit:
+            <a href="https://pgcpaitl.jntugv.edu.in" target="_blank" rel="noopener noreferrer">
+              pgcpaitl.jntugv.edu.in
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- END: IMPROVED IMPORTANT INFORMATION BANNER -->
+
 
       <div class="info-banner">
         <div class="info-item">
@@ -200,290 +657,331 @@
         </div>
       </div>
 
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+
       <ul class="steps">
         <li class="active"><span>Step 1</span>Personal Details</li>
-        <li class = "unactive"><span>Step 2</span>Contact Info</li>
-        <li><span>Step 3</span>Academics</li>
-        <li><span>Step 4</span>Documents & Payment</li>
+        <li class="unactive"><span>Step 2</span>Contact Info</li>
+        <li class="unactive"><span>Step 3</span>Academics</li>
+        <li class="unactive"><span>Step 4</span>Documents & Payment</li>
       </ul>
 
       <!-- Corrected and CSP-safe -->
       <form id="pgcForm" action="/application/submit" method="post" enctype="multipart/form-data">
+        <div class="form-step active" data-step="1">
+          <fieldset>
+            <legend>1. Personal Details</legend>
 
-        <fieldset>
-          <legend>1. Personal Details</legend>
+            <div class="grid">
+              <div class="form-group">
+                <label>Full Name <span class="required">*</span></label>
+                <input type="text" name="fullName" required title="fullName">
+              </div>
 
-          <div class="grid">
-            <div class="form-group">
-              <label>Full Name <span class="required">*</span></label>
-              <input type="text" name="fullName" required title="fullName">
-            </div>
+              <div class="form-group">
+                <label>Father’s / Mother’s Name <span class="required">*</span></label>
+                <input type="text" name="parentName" required title="parentName">
+              </div>
 
-            <div class="form-group">
-              <label>Father’s / Mother’s Name <span class="required">*</span></label>
-              <input type="text" name="parentName" required title="parentName">
-            </div>
+              <div class="form-group">
+                <label>Date of Birth<span class="required">*</span></label>
+                <input type="date" name="dob" required title="dob">
+              </div>
 
-            <div class="form-group">
-              <label>Date of Birth<span class="required" >*</span></label>
-              <input type="date" name="dob" required title="dob">
-            </div>
+              <div class="form-group">
+                <label>Gender<span class="required">*</span></label>
+                <div class="inline">
+                  <label><input type="radio" name="gender" value="Male" required> Male</label>
+                  <label><input type="radio" name="gender" value="Female"> Female</label>
+                  <label><input type="radio" name="gender" value="Other"> Other</label>
+                  <label><input type="radio" name="gender" value="Prefer not to say"> Prefer not to say</label>
+                </div>
+              </div>
 
-            <div class="form-group">
-              <label>Gender<span class="required">*</span></label>
-              <div class="inline">
-                <label><input type="radio" name="gender" value="Male" required> Male</label>
-                <label><input type="radio" name="gender" value="Female"> Female</label>
-                <label><input type="radio" name="gender" value="Other"> Other</label>
-                <label><input type="radio" name="gender" value="Prefer not to say"> Prefer not to say</label>
+              <div class="form-group">
+                <label>Category<span class="required">*</span></label>
+                <select name="category" required title="category">
+                  <option value="">Select</option>
+                  <option>General</option>
+                  <option>SC</option>
+                  <option>ST</option>
+                  <option>OBC</option>
+                  <option>EWS</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Nationality<span class="required">*</span></label>
+                <select name="nationality" required title="nationality">
+                  <option value="">Select</option>
+                  <option selected>Indian</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Aadhaar (optional)</label>
+                <input type="text" name="aadhaar" title="aadhaar">
               </div>
             </div>
+          </fieldset>
+        </div>
 
-            <div class="form-group">
-              <label>Category<span>*</span></label>
-              <select name="category" required title="category">
-                <option value="">Select</option>
-                <option>General</option>
-                <option>SC</option>
-                <option>ST</option>
-                <option>OBC</option>
-                <option>EWS</option>
-              </select>
+        <div class="form-step" data-step="2">
+          <fieldset>
+            <legend>2. Contact & Communication</legend>
+
+            <div class="grid">
+              <div class="form-group">
+                <label>Mobile Number <span class="required">*</span> </label>
+                <input type="tel" name="mobile" title="mobile">
+              </div>
+
+              <div class="form-group">
+                <label>WhatsApp Number <span class="required">*</span></label>
+                <input type="tel" name="whatsapp" title="whatsapp" required>
+              </div>
+
+              <div class="form-group">
+                <label>Email <span class="required">*</span></label>
+                <input type="email" name="email" required title="email">
+              </div>
+
             </div>
 
-            <div class="form-group">
-              <label>Nationality<span>*</span></label>
-              <select name="nationality" required title="nationality">
-                <option value="">Select</option>
-                <option selected>Indian</option>
-                <option>Other</option>
-              </select>
+            <div class="grid">
+              <div class="form-group">
+                <label>Address <span class="required">*</span></label>
+                <textarea name="address" title="address" required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>City<span class="required">*</span></label>
+                <input type="text" name="city" title="city" required>
+              </div>
+
+              <div class="form-group">
+                <label>District<span class="required">*</span></label>
+                <input type="text" name="district" title="district" required>
+              </div>
+
+              <div class="form-group">
+                <label>State<span class="required">*</span></label>
+                <select name="state" required title="state">
+                  <option value="">Select state</option>
+                  <option>Andhra Pradesh</option>
+                  <option>Telangana</option>
+                  <option>Tamil Nadu</option>
+                  <option>Karnataka</option>
+                  <option>Kerala</option>
+                  <option>Maharashtra</option>
+                  <option>Odisha</option>
+                  <option>West Bengal</option>
+                  <option>Delhi</option>
+                  <option>Uttar Pradesh</option>
+                  <option>Bihar</option>
+                  <option>Punjab</option>
+                  <option>Haryana</option>
+                  <option>Rajasthan</option>
+                  <option>Gujarat</option>
+                  <option>Madhya Pradesh</option>
+                  <option>Chhattisgarh</option>
+                  <option>Jharkhand</option>
+                  <option>Assam</option>
+                  <option>North East</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>PIN Code<span class="required">*</span></label>
+                <input type="text" name="pin" required title="pin">
+              </div>
+
+              <div class="form-group">
+                <label>Country<span class="required">*</span></label>
+                <select name="country" required title="country">
+                  <option value="">Select country</option>
+                  <option selected>India</option>
+                  <option>USA</option>
+                  <option>UK</option>
+                  <option>Canada</option>
+                  <option>Australia</option>
+                  <option>Germany</option>
+                  <option>France</option>
+                  <option>Singapore</option>
+                  <option>UAE</option>
+
+                  <option>Other</option>
+                </select>
+              </div>
             </div>
+          </fieldset>
 
-            <div class="form-group">
-              <label>Aadhaar (optional)</label>
-              <input type="text" name="aadhaar" title="aadhaar">
-            </div>
-          </div>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>2. Contact & Communication</legend>
+        <div class="form-step" data-step="3">
+          <fieldset>
+            <legend>3. Academic Qualifications</legend>
 
-          <div class="grid">
-            <div class="form-group">
-              <label>Mobile Number</label>
-              <input type="tel" name="mobile"  title="mobile">
-            </div>
+            <div class="grid">
+              <div class="form-group">
+                <label>Highest Degree<span class="required">*</span></label>
+                <select name="degreeLevel" required title="degreeLevel">
+                  <option value="">Select degree</option>
+                  <option>B.A.</option>
+                  <option>B.Sc.</option>
+                  <option>B.Com.</option>
+                  <option>B.Tech.</option>
+                  <option>LL.B.</option>
+                  <option>BBA</option>
+                  <option>BCA</option>
+                  <option>Other</option>
+                </select>
+              </div>
 
-            <div class="form-group">
-              <label>WhatsApp Number <span>*</span></label>
-              <input type="tel" name="whatsapp" title="whatsapp" required>
-            </div>
+              <div class="form-group">
+                <label>Specialization<span class="required">*</span></label>
+                <input type="text" name="specialization" required title="specialization">
+              </div>
 
-            <div class="form-group">
-              <label>Email <span>*</span></label>
-              <input type="email" name="email" required title="email">
-            </div>
+              <div class="form-group">
+                <label>Institution / College Name<span class="required">*</span></label>
+                <input type="text" name="institution" required title="institution">
+              </div>
 
-          </div>
+              <div class="form-group">
+                <label>University<span class="required">*</span></label>
+                <input type="text" name="university" required title="university">
+              </div>
 
-          <div class="grid">
-            <div class="form-group">
-              <label>Address <span>*</span></label>
-              <textarea name="address" title="address" required></textarea>
-            </div>
-
-            <div class="form-group">
-              <label>City<span>*</span></label>
-              <input type="text" name="city"  title="city" required>
-            </div>
-
-            <div class="form-group">
-              <label>District<span>*</span></label>
-              <input type="text" name="district" title="district" required>
-            </div>
-
-            <div class="form-group">
-              <label>State<span>*</span></label>
-              <select name="state" required title="state">
-                <option value="">Select state</option>
-                <option>Andhra Pradesh</option>
-                <option>Telangana</option>
-                <option>Tamil Nadu</option>
-                <option>Karnataka</option>
-                <option>Kerala</option>
-                <option>Maharashtra</option>
-                <option>Odisha</option>
-                <option>West Bengal</option>
-                <option>Delhi</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>PIN Code<span>*</span></label>
-              <input type="text" name="pin" required title="pin">
-            </div>
-
-            <div class="form-group">
-              <label>Country<span>*</span></label>
-              <select name="country" required title="country">
-                <option value="">Select country</option>
-                <option selected>India</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>3. Academic Qualifications</legend>
-
-          <div class="grid">
-            <div class="form-group">
-              <label>Highest Degree<span>*</span></label>
-              <select name="degreeLevel" required title="degreeLevel">
-                <option value="">Select degree</option>
-                <option>B.A.</option>
-                <option>B.Sc.</option>
-                <option>B.Com.</option>
-                <option>B.Tech.</option>
-                <option>LL.B.</option>
-                <option>BBA</option>
-                <option>BCA</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Specialization<span>*</span></label>
-              <input type="text" name="specialization" required title="specialization">
-            </div>
-
-            <div class="form-group">
-              <label>University<span>*</span></label>
-              <input type="text" name="university" required title="university">
-            </div>
-
-            <div class="form-group">
-              <label>Passing Year<span>*</span></label>
-              <select name="passingYear" id="passingYear" required title="passingYear>
+              <div class="form-group">
+                <label>Passing Year<span class="required">*</span></label>
+                <select name="passingYear" id="passingYear" required title="passingYear>
                 <option value="">Select year</option>
                 <!-- JS will generate values dynamically -->
               </select>
             </div>
 
+            <div class=" form-group">
+                  <label>Study Mode<span class="required">*</span></label>
+                  <select name="studyMode" required title="studyMode">
+                    <option value="">Select</option>
+                    <option>Regular</option>
+                    <option>Part-time</option>
+                    <option>Distance</option>
+                  </select>
+              </div>
+
+              <div class="form-group">
+                <label>Percentage / CGPA<span class="required">*</span></label>
+                <input type="text" name="percentage" title="percentage" required>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="form-step" data-step="4">
+
+          <fieldset>
+            <legend>4. Employment Details (Optional)</legend>
+
+            <div class="grid">
+              <div class="form-group">
+                <label>Employment Status</label>
+                <select name="employmentStatus" title="employmentStatus">
+                  <option value="">Select</option>
+                  <option>Employed</option>
+                  <option>Self-Employed</option>
+                  <option>Student</option>
+                  <option>Not Currently Employed</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Organisation</label>
+                <input type="text" name="organisation" title="organisation">
+              </div>
+
+              <div class="form-group">
+                <label>Designation</label>
+                <input type="text" name="designation" title="designation">
+              </div>
+
+              <div class="form-group">
+                <label>Sector</label>
+                <select title="sector" name="sector">
+                  <option value="">Select</option>
+                  <option>Judiciary</option>
+                  <option>Law Firm</option>
+                  <option>Corporate</option>
+                  <option>Government</option>
+                  <option>PSU</option>
+                  <option>Police / Enforcement</option>
+                  <option>IT / Technology</option>
+                  <option>Academia</option>
+                  <option>Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Experience</label>
+                <select title="experience" name="experience">
+                  <option value="">Select</option>
+                  <option>0–1 years</option>
+                  <option>1–3 years</option>
+                  <option>3–5 years</option>
+                  <option>5–10 years</option>
+                  <option>10+ years</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+
+        <div class="form-step" data-step="5">
+          <fieldset>
+            <legend>5. Statement of Purpose</legend>
+
             <div class="form-group">
-              <label>Study Mode<span>*</span></label>
-              <select name="studyMode" required title="studyMode">
-                <option value="">Select</option>
-                <option>Regular</option>
-                <option>Part-time</option>
-                <option>Distance</option>
-              </select>
+              <label>SOP<span class="required">*</span></label>
+              <textarea title="sop" name="sop" required></textarea>
             </div>
 
             <div class="form-group">
-              <label>Percentage / CGPA<span>*</span></label>
-              <input type="text" name="percentage" title="percentage" required>
+              <label>Preferred Communication Mode</label>
+              <div class="inline">
+                <label><input type="checkbox" name="commMode" value="Email" checked> Email</label>
+                <label><input type="checkbox" name="commMode" value="WhatsApp"> WhatsApp</label>
+                <label><input type="checkbox" name="commMode" value="SMS"> SMS</label>
+              </div>
             </div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>4. Employment Details (Optional)</legend>
-
-          <div class="grid">
-            <div class="form-group">
-              <label>Employment Status</label>
-              <select name="employmentStatus" title="employmentStatus">
-                <option value="">Select</option>
-                <option>Employed</option>
-                <option>Self-Employed</option>
-                <option>Student</option>
-                <option>Not Currently Employed</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Organisation</label>
-              <input type="text" name="organisation" title="organisation">
-            </div>
-
-            <div class="form-group">
-              <label>Designation</label>
-              <input type="text" name="designation" title="designation">
-            </div>
-
-            <div class="form-group">
-              <label>Sector</label>
-              <select  title="sector" name="sector">
-                <option value="">Select</option>
-                <option>Judiciary</option>
-                <option>Law Firm</option>
-                <option>Corporate</option>
-                <option>Government</option>
-                <option>PSU</option>
-                <option>Police / Enforcement</option>
-                <option>IT / Technology</option>
-                <option>Academia</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Experience</label>
-              <select title="experience" name="experience">
-                <option value="">Select</option>
-                <option>0–1 years</option>
-                <option>1–3 years</option>
-                <option>3–5 years</option>
-                <option>5–10 years</option>
-                <option>10+ years</option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>5. Statement of Purpose</legend>
-
-          <div class="form-group">
-            <label>SOP<span>*</span></label>
-            <textarea title="sop" name="sop" required></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Preferred Communication Mode</label>
-            <div class="inline">
-              <label><input type="checkbox" name="commMode" value="Email" checked> Email</label>
-              <label><input type="checkbox" name="commMode" value="WhatsApp"> WhatsApp</label>
-              <label><input type="checkbox" name="commMode" value="SMS"> SMS</label>
-            </div>
-          </div>
-        </fieldset>
-        <fieldset>
+          </fieldset>
+          <!-- <fieldset>
           <legend>6. Upload Documents</legend>
 
           <div class="grid">
             <div class="form-group">
-              <label>Photograph<span>*</span></label>
+              <label>Photograph<span class="required">*</span></label>
               <input title="photo" type="file" name="photo" accept="image/*" required>
             </div>
 
             <div class="form-group">
-              <label>ID Proof<span>*</span></label>
+              <label>ID Proof<span class="required">*</span></label>
               <input title="idProof" type="file" name="idProof" accept=".pdf, image/*" required>
             </div>
 
             <div class="form-group">
-              <label>Degree Certificate<span>*</span></label>
+              <label>Degree Certificate<span class="required">*</span></label>
               <input title="degreeCert" type="file" name="degreeCert" accept=".pdf" required>
             </div>
 
             <div class="form-group">
-              <label>Marksheets<span>*</span></label>
+              <label>Marksheets<span class="required">*</span></label>
               <input title="Marksheets" type="file" name="marksheets" accept=".pdf" required>
             </div>
 
@@ -492,35 +990,46 @@
               <input title="supportDocs" type="file" name="supportDocs" multiple>
             </div>
           </div>
-        </fieldset>
+        </fieldset> -->
 
-        <fieldset>
-          <legend>7. Declarations & Payment</legend>
+        </div>
 
-          <div class="checkbox-item">
-            <input type="checkbox" name="declaration" value="truth" required title="declaration">
-            <label>I declare that all information furnished is true.</label>
-          </div>
+        <div class="form-step" data-step="6">
+          <fieldset>
+            <legend>6. Declarations & Payment</legend>
 
-          <div class="checkbox-item">
-            <input type="checkbox" name="declaration" value="rules" required title="declaration">
-            <label>I agree to abide by programme rules.</label>
-          </div>
+            <div class="checkbox-item">
+              <input type="checkbox" name="declaration" value="truth" required title="declaration">
+              <label>I declare that all information furnished is true.</label>
+            </div>
 
-          <div class="checkbox-item">
-            <input type="checkbox" name="declaration" value="fee" required title="declaration">
-            <label>I understand the application fee is non-refundable.</label>
-          </div>
+            <div class="checkbox-item">
+              <input type="checkbox" name="declaration" value="rules" required title="declaration">
+              <label>I agree to abide by programme rules.</label>
+            </div>
 
-          <div class="payment-box">
-            <strong>Application Fee:</strong> ₹1,000 (non-refundable)<br>
-            After submitting, you will be redirected to the payment instructions page.
-          </div>
-        </fieldset>
+            <div class="checkbox-item">
+              <input type="checkbox" name="declaration" value="fee" required title="declaration">
+              <label>I understand the application fee is non-refundable.</label>
+            </div>
 
-        <div class="btn-bar">
-          <button type="reset" class="btn btn-outline">Clear Form</button>
-          <button type="submit" class="btn btn-primary">Submit & Proceed to Payment</button>
+            <div class="payment-box">
+              <strong>Application Fee:</strong> ₹1,000 (non-refundable)<br>
+              After submitting, you will be redirected to the payment instructions page.
+            </div>
+          </fieldset>
+        </div>
+
+
+        <!-- Navigation -->
+        <div class="step-nav">
+          <button type="button" id="prevBtn" class="step-btn disabled">← Back</button>
+          <button type="button" id="nextBtn" class="step-btn">Next →</button>
+        </div>
+
+        <!-- Final Submit -->
+        <div class="btn-bar" id="submitContainer" style="display:none;">
+          <button type="submit" class="btn-primary">Submit Application</button>
         </div>
 
       </form>
@@ -528,7 +1037,11 @@
   </div>
 
   <!-- CSP-SAFE external JS -->
-  <script src="/form-submit.js"></script>
+  <script src="/form-steps.js" defer></script>
+  <script src="/form-validate.js" defer></script>
+  <script src="/form-autosave.js" defer></script>
+  <script src="/form-submit.js" defer></script>
 
 </body>
+
 </html>

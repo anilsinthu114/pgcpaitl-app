@@ -1,5 +1,6 @@
-CREATE DATABASE IF NOT EXISTS pgcpatil-app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE pgcpatil-app;
+CREATE DATABASE IF NOT EXISTS `pgcpatil-app` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `pgcpatil-app`;
+
 
 CREATE TABLE IF NOT EXISTS applications (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
