@@ -44,7 +44,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     if (data.ok) {
       localStorage.setItem('adminToken', data.token);
-      window.location.href = '/admin/dashboard.html';
+      window.location.href = '/admin/adminDashboard.html';
     } else {
       errorDiv.textContent = data.error || 'Invalid credentials';
       errorDiv.style.display = 'block';

@@ -1,23 +1,77 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("paymentForm");
-  const msg = document.getElementById("msg");
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 Payment page loaded.");
+
+  const form = document.getElementById("payForm");
+  const msg = document.getElementById("payMsg");
+  const hiddenId = document.getElementById("application_id");
 
   if (!form) {
-    console.error("paymentForm not found in DOM");
+    console.error("❌ payForm not found in DOM");
+    return;
+  }
+  if (!msg) {
+    console.error("❌ payMsg element missing");
+    return;
+  }
+  if (!hiddenId) {
+    console.error("❌ Hidden application_id field missing");
     return;
   }
 
-  form.addEventListener("submit", async function (e) {
+  // ---------------------------------------------
+  // 1️⃣ Extract prettyId from URL
+  // ---------------------------------------------
+  const url = new URL(window.location.href);
+  const prettyId =
+    url.searchParams.get("id") ||
+    url.searchParams.get("application_id");
+
+  console.log("🔍 Extracted prettyId:", prettyId);
+
+  if (!prettyId) {
+    alert("Invalid payment link — Application ID missing.");
+    window.location.href = "/";
+    return;
+  }
+
+  // ---------------------------------------------
+  // 2️⃣ Resolve prettyId → numeric ID via backend
+  // ---------------------------------------------
+  try {
+    const res = await fetch(`/api/resolve-id?pretty=${encodeURIComponent(prettyId)}`);
+    const j = await res.json();
+
+    console.log("🔁 resolve-id response:", j);
+
+    if (!j.ok) {
+      alert("Invalid Application ID.");
+      window.location.href = "/";
+      return;
+    }
+
+    hiddenId.value = j.id;
+    console.log("✅ Numeric ID set:", j.id);
+
+  } catch (err) {
+    console.error("❌ Error resolving ID:", err);
+    alert("Server error.");
+    window.location.href = "/";
+    return;
+  }
+
+  // ---------------------------------------------
+  // 3️⃣ Handle payment form submission
+  // ---------------------------------------------
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     msg.textContent = "";
     msg.style.color = "#004c97";
 
     const fd = new FormData(form);
 
-    // Ensure default amount = 1000
-    if (!fd.get("amount") || fd.get("amount").trim() === "") {
-      fd.set("amount", "1000");
-    }
+    if (!fd.get("amount")) fd.set("amount", "1000");
+
+    console.log("📤 Uploading payment:", Object.fromEntries(fd.entries()));
 
     try {
       const res = await fetch("/payment/submit", {
@@ -25,44 +79,32 @@ document.addEventListener("DOMContentLoaded", function () {
         body: fd,
       });
 
-      const j = await res.json().catch(() => ({ ok: false }));
+      const j = await res.json();
+      console.log("📥 Payment submit response:", j);
 
       if (j.ok) {
-        // Show success message
         msg.style.color = "green";
-        msg.textContent = "Payment details submitted successfully. Redirecting…";
+        msg.textContent = "Payment submitted. Redirecting…";
 
-        // Auto-clear saved fields (if you use auto-save)
+        // clear local storage (if used)
         Object.keys(localStorage).forEach((k) => {
           if (k.startsWith("payment_") || k.startsWith("pgcForm_")) {
             localStorage.removeItem(k);
           }
         });
 
-        // Redirect if provided by backend (NO API CHANGE)
-        if (j.redirect) {
-          setTimeout(() => {
-            window.location.href = j.redirect;
-          }, 900);
-        } else {
-          // fallback if redirect not provided
-          setTimeout(() => {
-            form.reset();
-            msg.textContent = "Payment submitted, awaiting admin verification.";
-          }, 1200);
-        }
-      } else {
-        // Backend returned an error
-        msg.style.color = "#c0392b";
+        setTimeout(() => {
+          window.location.href = j.redirect || "/payment-success.html";
+        }, 900);
 
-        msg.textContent =
-          j.error ||
-          (j.errors ? j.errors.map((x) => x.msg).join(", ") : "Submission failed");
+      } else {
+        msg.style.color = "#c0392b";
+        msg.textContent = j.error || "Submission failed.";
       }
     } catch (err) {
+      console.error("❌ Payment submit error:", err);
       msg.style.color = "#c0392b";
-      msg.textContent = "Network or server error. Try again.";
-      console.error(err);
+      msg.textContent = "Network error. Try again.";
     }
   });
 });

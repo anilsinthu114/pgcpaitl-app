@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- cSpell:words PGCPAITL PGCP IFSC JNTU Vizianagaram BHIM Yono GPay PhonePe PayTM -->
 <html lang="en">
 
 <head>
@@ -179,17 +180,17 @@
 
         <h3>Upload Payment Proof</h3>
 
-        <form id="payForm" enctype="multipart/form-data">
+        <form id="payForm" enctype="multipart/form-data" >
           
-          <input type="hidden" name="application_id" id="application_id">
+            <input type="hidden" name="application_id" id="application_id">
 
-          <label>Enter UTR Number : <span style="color:#b00">*</span></label>
+          <label>Enter UTR Number : <span class="required">*</span></label>
           <input type="text" name="utr" id="utr" required placeholder="Enter UTR / Reference No.">
 
 
          
-          <label>Upload Screenshot (JPG / PNG / PDF)  :<span style="color:#b00">*</span></label>
-          <input type="file" name="screenshot" id="screenshot" accept="image/*,.pdf">
+          <label>Upload Screenshot (JPG / PNG )  :<span class="required">*</span></label>
+          <input type="file" name="screenshot" id="screenshot" accept="image/*" title="Upload payment proof screenshot in JPG, PNG, or PDF format" required>
 
           <div id="payMsg"></div>
 
@@ -212,21 +213,9 @@
     </div>
 
   </div>
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const url = new URL(window.location.href);
-    const appId = url.searchParams.get("id"); // prettyId
 
-    if (!appId) {
-      alert("Invalid payment link — Application ID missing.");
-      window.location.href = "/";
-      return;
-    }
 
-    document.getElementById("application_id").value = appId;
-  });
-</script>
-  <script src="/payment.js"></script>
+  <script src="/payment.js" defer></script>
 </body>
 
 </html>

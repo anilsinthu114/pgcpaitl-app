@@ -58,3 +58,39 @@ CREATE TABLE IF NOT EXISTS admin_users (
   role VARCHAR(50) DEFAULT 'admin',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS payment_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  application_id BIGINT NOT NULL,
+  utr VARCHAR(100) NOT NULL,
+  screenshot_path VARCHAR(1000),
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE application_payments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+    application_id BIGINT NOT NULL,
+    
+    utr VARCHAR(100) NOT NULL,                   -- Bank UTR / Transaction ID
+    amount DECIMAL(10,2) DEFAULT 1000.00,        -- Payment amount
+    payment_mode ENUM('SBI_QR','UPI','BANK') 
+        DEFAULT 'SBI_QR',
+
+    screenshot_path VARCHAR(255) DEFAULT NULL,   -- Stored screenshot full path
+    
+    status ENUM('pending','uploaded','verified','rejected')
+        DEFAULT 'pending',
+
+    remarks TEXT DEFAULT NULL,                   -- Additional notes (optional)
+
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP 
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (application_id) 
+        REFERENCES applications(id) 
+        ON DELETE CASCADE
+);
+

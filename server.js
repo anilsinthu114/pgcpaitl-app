@@ -20,6 +20,11 @@ const jwt = require('jsonwebtoken');
 // const Mailer = require("mailer");
 const Mailer = require("./mailer");
 
+const { appLogger, paymentLogger, dbLogger, errorLogger } = require("./logger");
+const requestLogger = require("./middleware/request-logger");
+const errorLoggerMiddleware = require("./middleware/error-logger");
+
+
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const FILE_BASE = process.env.FILE_BASE || path.join(__dirname, 'uploads');
@@ -71,6 +76,8 @@ const multerMiddleware = upload.any();
 
 const app = express();
 app.use(helmet());
+app.use(requestLogger);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimit({ windowMs: 60 * 1000, max: 120 }));
@@ -265,6 +272,42 @@ async function insertApplication(conn, obj) {
 // `;
 
 
+// -------------------------------------------------------------
+// Resolve prettyId → numeric internal application ID
+// Example: PGCPAITL-2025-000123 → 123
+// -------------------------------------------------------------
+app.get("/api/resolve-id", async (req, res) => {
+  try {
+    const { pretty } = req.query;
+
+    if (!pretty) {
+      return res.json({ ok: false, error: "Missing prettyId" });
+    }
+
+    // Extract last 6 digits
+    const numeric = parseInt(pretty.split("-").pop(), 10);
+
+    if (!numeric || isNaN(numeric)) {
+      return res.json({ ok: false, error: "Invalid prettyId format" });
+    }
+
+    const [rows] = await pool.query(
+      "SELECT id FROM applications WHERE id = ?",
+      [numeric]
+    );
+
+    if (rows.length === 0) {
+      return res.json({ ok: false, error: "Application not found" });
+    }
+
+    return res.json({ ok: true, id: numeric });
+  } catch (err) {
+    console.error("resolve-id error:", err);
+    return res.json({ ok: false, error: "Server error" });
+  }
+});
+
+
 // ===================================================================
 // 🔵 APPLICATION SUBMIT — FILE UPLOAD LOGIC COMMENTED (NOT REMOVED)
 // ===================================================================
@@ -432,6 +475,9 @@ app.post(
           application_id: prettyId,
           redirect: buildOrigin(req) + "/payment.html?id=" + encodeURIComponent(prettyId)
         });
+
+        appLogger.info("Application submitted", { email: req.body.email });
+
 
       } catch (dbErr) {
         await conn.rollback();
@@ -655,34 +701,77 @@ app.post("/application/:id/payment-activate", adminAuth, async (req, res) => {
 //   }
 // });
 
+// ========================================
+// ADMIN — LIST ALL APPLICATION FILES
+// ========================================
+app.get("/admin/files/list", adminAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        id,
+        application_id,
+        type,
+        original_name,
+        stored_name,
+        stored_path,
+        mime,
+        size_bytes,
+        uploaded_at
+      FROM application_files
+      ORDER BY uploaded_at DESC
+      LIMIT 500
+    `);
+
+    return res.json({ ok: true, files: rows });
+  } catch (err) {
+    console.error("FILES LIST ERROR:", err);
+    return res.json({ ok: false, error: "Server error" });
+  }
+});
+
 
 const paymentUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
-    if (!["image/png", "image/jpeg"].includes(file.mimetype)) {
+    console.log("🔍 File upload attempt:", file?.originalname, "MIME:", file?.mimetype);
+    if (!["image/png", "image/jpeg", ].includes(file.mimetype)) {
+      console.warn("❌ Invalid MIME type rejected:", file.mimetype);
       return cb(new Error("Only PNG/JPG screenshot allowed"));
     }
+    console.log("✅ File type accepted");
     cb(null, true);
   }
 });
 
 app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res) => {
+  console.log("========== PAYMENT SUBMIT API HIT ==========");
   try {
     const { application_id, utr } = req.body;
 
-    if (!utr || !application_id)
+    console.log("📥 Incoming form data:", { application_id, utr });
+    console.log("📸 File received:", req.file ? req.file.originalname : 'none');
+
+    if (!utr || !application_id) {
+      console.warn("⚠ Missing required fields");
       return res.status(400).json({ ok: false, error: "Missing fields" });
+    }
 
     const conn = await pool.getConnection();
+    console.log("🔌 Connected to DB for payment check");
 
     const [check] = await conn.query("SELECT id FROM applications WHERE id=?", [application_id]);
-    if (check.length === 0)
+    console.log("🔎 Application lookup result:", check);
+
+    if (check.length === 0) {
+      console.error("❌ No application found for ID:", application_id);
       return res.status(404).json({ ok: false, error: "Application not found" });
+    }
 
     // Create directory
     const dir = path.join(FILE_BASE, "payments", String(application_id));
     fsSync.mkdirSync(dir, { recursive: true });
+    console.log("📁 Payment directory ensured:", dir);
 
     // Save screenshot
     let screenshotPath = null;
@@ -690,9 +779,13 @@ app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res)
       const name = `payment_${Date.now()}.png`;
       screenshotPath = path.join(dir, name);
       await fs.writeFile(screenshotPath, req.file.buffer, { mode: 0o640 });
+      console.log("💾 Screenshot saved at:", screenshotPath);
+    } else {
+      console.warn("⚠ No screenshot file uploaded.");
     }
 
     // Insert record
+    console.log("📝 Inserting payment record...");
     await conn.query(
       `INSERT INTO application_payments 
        (application_id, utr, screenshot_path, status) 
@@ -700,6 +793,7 @@ app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res)
       [application_id, utr, screenshotPath]
     );
 
+    console.log("✅ Payment record inserted successfully!");
     conn.release();
 
     return res.json({
@@ -708,7 +802,7 @@ app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res)
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("🔥 PAYMENT SUBMIT ERROR:", err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -727,6 +821,8 @@ app.put("/payment/:id/status", adminAuth, async (req, res) => {
 
   return res.json({ ok: true });
 });
+
+app.use(errorLoggerMiddleware);
 
 // server start
 app.listen(PORT, HOST, () => {

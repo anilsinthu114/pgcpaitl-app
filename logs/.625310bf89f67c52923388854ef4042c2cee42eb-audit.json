@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "E:\\Anil\\pgcpaitl-app\\logs\\.625310bf89f67c52923388854ef4042c2cee42eb-audit.json",
+    "files": [
+        {
+            "date": 1764950637808,
+            "name": "E:\\Anil\\pgcpaitl-app\\logs\\db-2025-12-05.log",
+            "hash": "1ac9d88322b9ff18d6581d5ce2ec1470a9aadb38b9a4868b25cfc301aae7f741"
+        }
+    ],
+    "hashType": "sha256"
+}
