@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Response received:", j);
   
       if (j.ok) {
-        window.location.href = j.redirect || "/thank-you.html";
+        window.location.href = j.redirect;
       } else {
         alert("Error submitting: " + j.error);
       }

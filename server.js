@@ -94,6 +94,10 @@ function buildOrigin(req) {
   return `${proto}://${req.get("host")}`;
 }
 
+function makePrettyId(id) {
+  return `PGCPAITL-2025-${String(id).padStart(6, "0")}`;
+}
+
 // ---------- Auto-create default admin ----------
 async function ensureDefaultAdmin() {
   const [rows] = await pool.query("SELECT COUNT(*) AS c FROM admin_users");
@@ -144,7 +148,11 @@ async function insertApplication(conn, obj) {
   ];
 
   const [res] = await conn.query(sql, params);
-  return res.insertId;
+  const numericId = res.insertId;
+  return {
+    numericId,
+    prettyId: makePrettyId(numericId)
+  };
 }
 
 
@@ -339,7 +347,7 @@ app.post(
       try {
         await conn.beginTransaction();
 
-        const applicationId = await insertApplication(conn, appObj);
+        const { numericId, prettyId } = await insertApplication(conn, appObj);
 
         // --------------------------------------------------------
         // 🔶 FILE UPLOAD STORAGE (COMMENTED OUT)
@@ -399,8 +407,8 @@ app.post(
         try {
           await Mailer.sendMail(
             appObj.email,
-            `PGCPAITL Application Received – ID ${applicationId}`,
-            Mailer.applicantSubmissionEmail(appObj, applicationId),
+            `PGCPAITL Application Received – ID ${prettyId}`,
+            Mailer.applicantSubmissionEmail(appObj, prettyId),
             process.env.EMAIL_TO
           );
         } catch (mailErr) {
@@ -408,10 +416,10 @@ app.post(
         }
 
         try {
-         await Mailer.sendMail(
-          process.env.EMAIL_TO,
-          `New PGCPAITL Application Submitted – ID ${applicationId}`,
-          Mailer.adminNotificationEmail(appObj, applicationId)
+          await Mailer.sendMail(
+            process.env.EMAIL_TO,
+            `New PGCPAITL Application Submitted – ID ${prettyId}`,
+            Mailer.adminNotificationEmail(appObj, prettyId)
           );
         }
         catch (adminMailErr) {
@@ -420,8 +428,9 @@ app.post(
 
         return res.status(201).json({
           ok: true,
-          application_id: applicationId,
-          redirect: buildOrigin(req) + "/thank-you.html"
+          numeric_id: numericId,
+          application_id: prettyId,
+          redirect: buildOrigin(req) + "/payment.html?id=" + encodeURIComponent(prettyId)
         });
 
       } catch (dbErr) {
@@ -563,89 +572,161 @@ app.post("/application/:id/payment-activate", adminAuth, async (req, res) => {
 // ===============================
 // BULK PAYMENT ACTIVATION (Improved UI/UX Email)
 // ===============================
-app.post("/application/payment-activate-all", adminAuth, async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      "SELECT id, fullName, email FROM applications WHERE email IS NOT NULL"
-    );
+// app.post("/application/payment-activate-all", adminAuth, async (req, res) => {
+//   try {
+//     const [rows] = await pool.query(
+//       "SELECT id, fullName, email FROM applications WHERE email IS NOT NULL"
+//     );
 
-    let sent = 0;
+//     let sent = 0;
 
-    for (const app of rows) {
-      const paymentEmailHtml = `
-      <div style="font-family: Arial, sans-serif; padding:20px; background:#f7f9fc;">
-        <div style="max-width:600px; margin:auto; background:#ffffff; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-          
-          <h2 style="color:#003c7a; text-align:center; margin-top:0;">
-            PGCPAITL – Payment Activation Notice
-          </h2>
+//     for (const app of rows) {
+//       const paymentEmailHtml = `
+//       <div style="font-family: Arial, sans-serif; padding:20px; background:#f7f9fc;">
+//         <div style="max-width:600px; margin:auto; background:#ffffff; padding:20px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
 
-          <p style="font-size:15px; color:#333;">
-            Dear <strong>${escapeHtml(app.fullName)}</strong>,
-          </p>
+//           <h2 style="color:#003c7a; text-align:center; margin-top:0;">
+//             PGCPAITL – Payment Activation Notice
+//           </h2>
 
-          <p style="font-size:15px; color:#444; line-height:1.6;">
-            We are pleased to inform you that the <strong>₹1,000/- registration fee payment window</strong> 
-            for your PGCPAITL application is now <span style="color:#27ae60; font-weight:bold;">ACTIVE</span>.
-          </p>
+//           <p style="font-size:15px; color:#333;">
+//             Dear <strong>${escapeHtml(app.fullName)}</strong>,
+//           </p>
 
-          <p style="font-size:15px; color:#444;">
-            Please complete the payment to confirm your application. Applications without payment will remain 
-            <strong>provisional</strong>.
-          </p>
+//           <p style="font-size:15px; color:#444; line-height:1.6;">
+//             We are pleased to inform you that the <strong>₹1,000/- registration fee payment window</strong> 
+//             for your PGCPAITL application is now <span style="color:#27ae60; font-weight:bold;">ACTIVE</span>.
+//           </p>
 
-          <div style="text-align:center; margin:25px 0;">
-            <a href="https://dummy-payment-link.pgcpaitl.jntugv.edu.in"
-              style="display:inline-block; background:#004c97; padding:12px 22px; 
-              color:#fff; text-decoration:none; font-size:16px; border-radius:6px;">
-              Proceed to Payment
-            </a>
-          </div>
+//           <p style="font-size:15px; color:#444;">
+//             Please complete the payment to confirm your application. Applications without payment will remain 
+//             <strong>provisional</strong>.
+//           </p>
 
-          <div style="background:#fff7ed; padding:14px; border-left:4px solid #f39c12; border-radius:6px; margin-top:20px;">
-            <strong style="color:#b45309;">Important Notes:</strong>
-            <ul style="margin:10px 0 0 18px; padding:0; color:#5a4a42; font-size:14px; line-height:1.5;">
-              <li>The registration fee is non-refundable.</li>
-              <li>Your application will be processed only after successful payment.</li>
-              <li>This is an automated message — no action is needed if you have already paid.</li>
-            </ul>
-          </div>
+//           <div style="text-align:center; margin:25px 0;">
+//             <a href="https://dummy-payment-link.pgcpaitl.jntugv.edu.in"
+//               style="display:inline-block; background:#004c97; padding:12px 22px; 
+//               color:#fff; text-decoration:none; font-size:16px; border-radius:6px;">
+//               Proceed to Payment
+//             </a>
+//           </div>
 
-          <p style="font-size:15px; margin-top:20px;">
-            Regards,<br>
-            <strong>PGCPAITL Admissions Team</strong><br>
-            JNTU-GV & DSNLU
-          </p>
+//           <div style="background:#fff7ed; padding:14px; border-left:4px solid #f39c12; border-radius:6px; margin-top:20px;">
+//             <strong style="color:#b45309;">Important Notes:</strong>
+//             <ul style="margin:10px 0 0 18px; padding:0; color:#5a4a42; font-size:14px; line-height:1.5;">
+//               <li>The registration fee is non-refundable.</li>
+//               <li>Your application will be processed only after successful payment.</li>
+//               <li>This is an automated message — no action is needed if you have already paid.</li>
+//             </ul>
+//           </div>
 
-          <p style="font-size:12px; color:#888; text-align:center; margin-top:30px;">
-            This is an automated notification. Please do not reply to this email.
-          </p>
-        </div>
-      </div>
-      `;
+//           <p style="font-size:15px; margin-top:20px;">
+//             Regards,<br>
+//             <strong>PGCPAITL Admissions Team</strong><br>
+//             JNTU-GV & DSNLU
+//           </p>
 
-      try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: app.email,
-          subject: "PGCPAITL – Registration Fee Payment Activated",
-          html: paymentEmailHtml
-        });
+//           <p style="font-size:12px; color:#888; text-align:center; margin-top:30px;">
+//             This is an automated notification. Please do not reply to this email.
+//           </p>
+//         </div>
+//       </div>
+//       `;
 
-        sent++;
-      } catch (mailErr) {
-        console.error("Payment email failed for", app.email, mailErr.message);
-      }
+//       try {
+//         await transporter.sendMail({
+//           from: process.env.EMAIL_FROM,
+//           to: app.email,
+//           subject: "PGCPAITL – Registration Fee Payment Activated",
+//           html: paymentEmailHtml
+//         });
+
+//         sent++;
+//       } catch (mailErr) {
+//         console.error("Payment email failed for", app.email, mailErr.message);
+//       }
+//     }
+
+//     res.json({ ok: true, count: sent });
+
+//   } catch (err) {
+//     console.error("Bulk payment activation error:", err);
+//     res.status(500).json({ ok: false, error: err.message });
+//   }
+// });
+
+
+const paymentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!["image/png", "image/jpeg"].includes(file.mimetype)) {
+      return cb(new Error("Only PNG/JPG screenshot allowed"));
     }
-
-    res.json({ ok: true, count: sent });
-
-  } catch (err) {
-    console.error("Bulk payment activation error:", err);
-    res.status(500).json({ ok: false, error: err.message });
+    cb(null, true);
   }
 });
 
+app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res) => {
+  try {
+    const { application_id, utr } = req.body;
+
+    if (!utr || !application_id)
+      return res.status(400).json({ ok: false, error: "Missing fields" });
+
+    const conn = await pool.getConnection();
+
+    const [check] = await conn.query("SELECT id FROM applications WHERE id=?", [application_id]);
+    if (check.length === 0)
+      return res.status(404).json({ ok: false, error: "Application not found" });
+
+    // Create directory
+    const dir = path.join(FILE_BASE, "payments", String(application_id));
+    fsSync.mkdirSync(dir, { recursive: true });
+
+    // Save screenshot
+    let screenshotPath = null;
+    if (req.file) {
+      const name = `payment_${Date.now()}.png`;
+      screenshotPath = path.join(dir, name);
+      await fs.writeFile(screenshotPath, req.file.buffer, { mode: 0o640 });
+    }
+
+    // Insert record
+    await conn.query(
+      `INSERT INTO application_payments 
+       (application_id, utr, screenshot_path, status) 
+       VALUES (?, ?, ?, 'pending')`,
+      [application_id, utr, screenshotPath]
+    );
+
+    conn.release();
+
+    return res.json({
+      ok: true,
+      redirect: "/payment-success.html"
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+
+app.put("/payment/:id/status", adminAuth, async (req, res) => {
+  const { status, admin_note } = req.body;
+
+  if (!["verified", "rejected"].includes(status))
+    return res.status(400).json({ ok: false, error: "Invalid status" });
+
+  await pool.query(
+    "UPDATE application_payments SET status=?, admin_note=? WHERE id=?",
+    [status, admin_note || null, req.params.id]
+  );
+
+  return res.json({ ok: true });
+});
 
 // server start
 app.listen(PORT, HOST, () => {

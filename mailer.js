@@ -212,43 +212,43 @@ function statusUpdateEmail(app, status) {
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 5: Payment Activation
 // ------------------------------------------------------------------
-function paymentActivationEmail(app, id) {
-  return layout(`
-    <h2 style="color:#003c7a;">Registration Fee Payment Activated</h2>
+// function paymentActivationEmail(app, id) {
+//   return layout(`
+//     <h2 style="color:#003c7a;">Registration Fee Payment Activated</h2>
 
-    <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+//     <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
 
-    <p>
-      Your PGCPAITL application (ID <b>${id}</b>) is now ready for payment.
-      Please complete the <strong>₹1,000 non-refundable registration fee</strong>.
-    </p>
+//     <p>
+//       Your PGCPAITL application (ID <b>${id}</b>) is now ready for payment.
+//       Please complete the <strong>₹1,000 non-refundable registration fee</strong>.
+//     </p>
 
-    <div style="text-align:center;margin:25px 0;">
-      <a href="https://dummy-payment.pgcpaitl.jntugv.edu.in"
-         style="padding:12px 24px;background:#003c7a;color:#fff;
-         border-radius:6px;text-decoration:none;font-size:16px;">
-         Proceed to Payment
-      </a>
-    </div>
+//     <div style="text-align:center;margin:25px 0;">
+//       <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?appId=${encodeURIComponent(id)}"
+//          style="padding:12px 24px;background:#003c7a;color:#fff;
+//          border-radius:6px;text-decoration:none;font-size:16px;">
+//          Proceed to Payment
+//       </a>
+//     </div>
 
-    <div style="
-      background:#fff8e6;
-      border-left:4px solid #e4a11b;
-      padding:12px;
-      border-radius:8px;
-      font-size:14px;
-      color:#6a4a00;
-      margin-top:20px;
-    ">
-      <strong>Note:</strong>
-      <ul style="margin:6px 0 0 18px;padding:0;">
-        <li>The fee is non-refundable.</li>
-        <li>Applications remain provisional until payment is completed.</li>
-        <li>If you already paid, you may ignore this message.</li>
-      </ul>
-    </div>
-  `);
-}
+//     <div style="
+//       background:#fff8e6;
+//       border-left:4px solid #e4a11b;
+//       padding:12px;
+//       border-radius:8px;
+//       font-size:14px;
+//       color:#6a4a00;
+//       margin-top:20px;
+//     ">
+//       <strong>Note:</strong>
+//       <ul style="margin:6px 0 0 18px;padding:0;">
+//         <li>The fee is non-refundable.</li>
+//         <li>Applications remain provisional until payment is completed.</li>
+//         <li>If you already paid, you may ignore this message.</li>
+//       </ul>
+//     </div>
+//   `);
+// }
 
 // ------------------------------------------------------------------
 // MAIL SENDER WRAPPER
@@ -265,7 +265,7 @@ module.exports = {
   applicantSubmissionEmail,
   adminNotificationEmail,
   statusUpdateEmail,
-  paymentActivationEmail,
+  // paymentActivationEmail,
   announcementBlock,
   layout
 };
