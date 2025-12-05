@@ -63,11 +63,16 @@ function layout(content) {
       ${content}
 
       <div style="border-top:1px solid #e3e6ed;margin:25px 0;"></div>
+		<p style ="text-align:left; color:#777; font-size:12px;">
+		PGCPAITL Admisions team 
+		JNTUGV & DSNLU
+</p>
 
       <!-- FOOTER -->
       <p style="text-align:center;color:#777;font-size:12px;margin-top:25px;">
         This is an automated academic notification. Please do not reply.
         <br>
+		
         © ${new Date().getFullYear()} JNTU-GV · All Rights Reserved.
       </p>
     </div>
@@ -279,9 +284,10 @@ async function sendPaymentStatusUpdate(application_id, status) {
     const pool = require("./db"); // IF you have pool exported, else adjust.
 
     const [rows] = await pool.query(
-      "SELECT fullName, email, pretty_id FROM applications WHERE id=?",
+      "SELECT fullName, email, id FROM applications WHERE id=?",
       [application_id]
     );
+    const prettyId = `PGCPAITL-2025-${String(app.id).padStart(6, "0")}`;
 
     if (!rows || rows.length === 0) {
       console.error("sendPaymentStatusUpdate: Application not found:", application_id);
@@ -294,7 +300,7 @@ async function sendPaymentStatusUpdate(application_id, status) {
     let html = "";
 
     if (status === "verified") {
-      subject = `PGCPAITL – Payment Verified (ID: ${app.pretty_id})`;
+      subject = `PGCPAITL – Payment Verified (ID: ${prettyId})`;
 
       html = `
         <div style="font-family:Arial, sans-serif; padding:20px; background:#f5f7fb;">
@@ -311,7 +317,7 @@ async function sendPaymentStatusUpdate(application_id, status) {
               <span style="font-weight:bold; color:#1b7a1b;">verified and approved</span>.
             </p>
 
-            <p><b>Application ID:</b> ${app.pretty_id}</p>
+            <p><b>Application ID:</b> ${prettyId}</p>
 
             <p>
               Your application will now proceed to the next stage of admission processing.
@@ -329,7 +335,7 @@ async function sendPaymentStatusUpdate(application_id, status) {
     }
 
     else if (status === "rejected") {
-      subject = `PGCPAITL – Payment Rejected (ID: ${app.pretty_id})`;
+      subject = `PGCPAITL – Payment Rejected (ID: ${prettyId})`;
 
       html = `
         <div style="font-family:Arial, sans-serif; padding:20px; background:#f5f7fb;">
@@ -345,7 +351,7 @@ async function sendPaymentStatusUpdate(application_id, status) {
               the <strong>PGCPAITL Application</strong>.
             </p>
 
-            <p><b>Application ID:</b> ${app.pretty_id}</p>
+            <p><b>Application ID:</b> ${prettyId}</p>
 
             <p>
               Please re-upload clear payment proof (UTR screenshot) using the payment link provided earlier.
@@ -438,7 +444,7 @@ module.exports = {
   statusUpdateEmail,
   // paymentActivationEmail,
   // announcementBlock,
-  paymentRecivedEmail,
+  paymentReceivedEmail,
   sendPaymentStatusUpdate,
   layout
 

@@ -794,20 +794,21 @@ app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res)
     );
 
     console.log("✅ Payment record inserted successfully!");
-    ModalLogger.info("Payment submitted", { application_id, utr });
+    
 
     conn.release();
 
     const [[app]] = await conn.query(
-  "SELECT fullName, email, pretty_id FROM applications WHERE id=?",
+  "SELECT id ,fullName, email FROM applications WHERE id=?",
   [application_id]
 );
+    const prettyId = `PGCPAITL-2025-${String(app.id).padStart(6, "0")}`;
 
 if (app && app.email) {
   Mailer.sendMail(
     app.email,
     `PGCPAITL – Payment Submission Received`,
-    Mailer.paymentReceivedEmail(app, app.pretty_id, utr)
+    Mailer.paymentReceivedEmail(app, prettyId, utr)
   ).catch(err => console.error("Payment receipt email error:", err.message));
 }
     return res.json({
