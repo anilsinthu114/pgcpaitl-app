@@ -401,7 +401,7 @@ app.post(
             appObj.email,
             `PGCPAITL Application Received – ID ${applicationId}`,
             Mailer.applicantSubmissionEmail(appObj, applicationId),
-            process.env.EMAIL_CC
+            process.env.EMAIL_TO
           );
         } catch (mailErr) {
           console.error("Applicant mail send error:", mailErr.message);

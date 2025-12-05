@@ -179,6 +179,21 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
+    .bulk-btn {
+      margin-left: 16px;
+      margin-bottom: 10px;
+      background: #8e44ad;
+      color: #fff;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #loading {
+      display: none;
+    }
   </style>
 </head>
 
@@ -203,30 +218,23 @@
         <h3>Reviewing</h3>
         <p id="reviewingApps">-</p>
       </div>
-      <div class="stat-card">
-        <h3>Accepted</h3>
-        <p id="acceptedApps">-</p>
-      </div>
-      <div class="stat-card">
-        <h3>Rejected</h3>
-        <p id="rejectedApps">-</p>
-      </div>
+    <div class="stat-card">
+      <h3>Accepted</h3>
+      <p id="acceptedApps">-</p>
     </div>
+    <div class="stat-card">
+      <h3>Rejected</h3>
+      <p id="rejectedApps">-</p>
+    </div>
+  </div>
 
-    <div class="applications">
-      <h2 style="padding:16px">Recent Applications</h2>
-      <button id="activateAllBtn" class="bulk-btn" style="
-   margin-left:16px; 
-   margin-bottom:10px;
-   background:#8e44ad;
-   color:#fff;
-   padding:8px 14px;
-   border:none;
-   border-radius:4px; 
-   cursor:pointer;" disabled>
-        Activate Payment for All Applicants
-      </button>
-      <div id="loading" style="padding:20px;text-align:center;">Loading...</div>
+  <div id="loading">Loading...</div>
+    Activate Payment for All Applicants
+  </button>
+
+  <div id="loading" style="display:none;">Loading...</div>
+
+  <div class="applications">
 
       <table id="appsTable" style="display:none; width:100%;">
         <thead>

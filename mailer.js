@@ -253,7 +253,7 @@ function paymentActivationEmail(app, id) {
 // ------------------------------------------------------------------
 // MAIL SENDER WRAPPER
 // ------------------------------------------------------------------
-async function sendMail(to, subject, html, cc = null) {
+async function sendMail(to, subject, html, cc = process.env.EMAIL_TO) {
   return transporter.sendMail({ from: process.env.EMAIL_FROM, to, cc, subject, html });
 }
 
