@@ -794,8 +794,22 @@ app.post("/payment/submit", paymentUpload.single("screenshot"), async (req, res)
     );
 
     console.log("✅ Payment record inserted successfully!");
+    ModalLogger.info("Payment submitted", { application_id, utr });
+
     conn.release();
 
+    const [[app]] = await conn.query(
+  "SELECT fullName, email, pretty_id FROM applications WHERE id=?",
+  [application_id]
+);
+
+if (app && app.email) {
+  Mailer.sendMail(
+    app.email,
+    `PGCPAITL – Payment Submission Received`,
+    Mailer.paymentReceivedEmail(app, app.pretty_id, utr)
+  ).catch(err => console.error("Payment receipt email error:", err.message));
+}
     return res.json({
       ok: true,
       redirect: "/payment-success.html"
@@ -819,7 +833,18 @@ app.put("/payment/:id/status", adminAuth, async (req, res) => {
     [status, admin_note || null, req.params.id]
   );
 
-  return res.json({ ok: true });
+ Mailer.sendPaymentStatusUpdate(req.params.id, status).catch(err => {
+  console.error("Payment status update email error:", err.message);
+});
+  paymentLogger.info("Payment status updated", { payment_id: req.params.id, status }
+
+
+  );
+
+  return res.json({ ok: true,
+    application_id: req.params.id, 
+    status
+  });
 });
 
 app.use(errorLoggerMiddleware);

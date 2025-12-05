@@ -78,35 +78,35 @@ function layout(content) {
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 1: Announcement Block (Improved)
 // ------------------------------------------------------------------
-function announcementBlock() {
-  return `
-  <div style="
-    padding:16px;
-    border-left:4px solid #e67e22;
-    background:#fff4e6;
-    border-radius:8px;
-    margin-bottom:20px;
-  ">
-    <h3 style="margin:0;color:#c06500;">Important Information for Applicants</h3>
-    <p style="margin:8px 0;font-size:14px;color:#5a4635;">
-      Applicants may submit the Online Application Form through the portal at present.
-    </p>
-    <p style="margin:6px 0;font-size:14px;color:#5a4635;">
-      The <strong>₹1,000/- non-refundable registration fee</strong> payment link will be activated shortly.
-      Email notification will follow once the payment system is live.
-    </p>
-    <p style="margin:6px 0;font-size:14px;color:#5a4635;font-weight:600;">
-      All applications remain provisional until fee payment is completed.
-    </p>
-    <p style="margin-top:10px;font-size:13px;">
-      For official updates, visit:
-      <a href="https://pgcpaitl.jntugv.edu.in" target="_blank" style="color:#003c7a;font-weight:600;">
-        pgcpaitl.jntugv.edu.in
-      </a>
-    </p>
-  </div>
-  `;
-}
+// function announcementBlock() {
+//   return `
+//   <div style="
+//     padding:16px;
+//     border-left:4px solid #e67e22;
+//     background:#fff4e6;
+//     border-radius:8px;
+//     margin-bottom:20px;
+//   ">
+//     <h3 style="margin:0;color:#c06500;">Important Information for Applicants</h3>
+//     <p style="margin:8px 0;font-size:14px;color:#5a4635;">
+//       Applicants may submit the Online Application Form through the portal at present.
+//     </p>
+//     <p style="margin:6px 0;font-size:14px;color:#5a4635;">
+//       The <strong>₹1,000/- non-refundable registration fee</strong> payment link will be activated shortly.
+//       Email notification will follow once the payment system is live.
+//     </p>
+//     <p style="margin:6px 0;font-size:14px;color:#5a4635;font-weight:600;">
+//       All applications remain provisional until fee payment is completed.
+//     </p>
+//     <p style="margin-top:10px;font-size:13px;">
+//       For official updates, visit:
+//       <a href="https://pgcpaitl.jntugv.edu.in" target="_blank" style="color:#003c7a;font-weight:600;">
+//         pgcpaitl.jntugv.edu.in
+//       </a>
+//     </p>
+//   </div>
+//   `;
+// }
 
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 2: Applicant Submission Acknowledgement
@@ -210,6 +210,178 @@ function statusUpdateEmail(app, status) {
 }
 
 // ------------------------------------------------------------------
+// EMAIL TEMPLATE 6: Payment Received Acknowledgement
+// ------------------------------------------------------------------
+function paymentReceivedEmail(appObj, prettyId, utr) {
+  return `
+    <div style="font-family:Arial, sans-serif; padding:20px; background:#f5f7fb;">
+      <div style="max-width:650px; margin:auto; background:#ffffff; padding:22px;
+                  border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,0.08);">
+
+        <h2 style="color:#004c97; margin-top:0;">Payment Submission Received</h2>
+
+        <p>Dear <strong>${escapeHtml(appObj.fullName)}</strong>,</p>
+
+        <p>
+          We acknowledge the receipt of your <strong>payment proof submission</strong> 
+          for your application to the 
+          <strong>PG Certificate Programme in Artificial Intelligence, Technology & Law (PGCPAITL)</strong>.
+        </p>
+
+        <table cellpadding="8" cellspacing="0" 
+               style="border-collapse:collapse; margin-top:12px; font-size:14px;">
+          <tr>
+            <td><b>Application ID:</b></td>
+            <td>${prettyId}</td>
+          </tr>
+          <tr>
+            <td><b>UTR / Reference No:</b></td>
+            <td>${escapeHtml(utr)}</td>
+          </tr>
+          <tr>
+            <td><b>Submission Time:</b></td>
+            <td>${new Date().toLocaleString("en-IN")}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top:14px;">
+          <strong>Your payment is currently under verification</strong> by the Admissions Team.
+          You will be notified via email once the verification is completed.
+        </p>
+
+        <p>
+          If there is any discrepancy or additional information required, we will contact you.
+        </p>
+
+        <hr style="margin:22px 0; border:none; border-top:1px solid #eee;" />
+
+        <p style="font-size:13px; color:#666; margin-top:12px;">
+          This is an automated acknowledgement email. Please do not reply to this message.
+        </p>
+
+        <p style="margin-top:18px;">
+          Regards,<br/>
+          <strong>PGCPAITL Admissions Team</strong><br/>
+          JNTU-GV & DSNLU
+        </p>
+
+      </div>
+    </div>
+  `;
+}
+
+// ------------------------------------------------------------------
+// EMAIL TEMPLATE 7: Payment Status Update (Verified / Rejected)
+// ------------------------------------------------------------------
+async function sendPaymentStatusUpdate(application_id, status) {
+  try {
+    // fetch DB instance inside mailer
+    const mysql = require("mysql2/promise");
+    const pool = require("./db"); // IF you have pool exported, else adjust.
+
+    const [rows] = await pool.query(
+      "SELECT fullName, email, pretty_id FROM applications WHERE id=?",
+      [application_id]
+    );
+
+    if (!rows || rows.length === 0) {
+      console.error("sendPaymentStatusUpdate: Application not found:", application_id);
+      return;
+    }
+
+    const app = rows[0];
+
+    let subject = "";
+    let html = "";
+
+    if (status === "verified") {
+      subject = `PGCPAITL – Payment Verified (ID: ${app.pretty_id})`;
+
+      html = `
+        <div style="font-family:Arial, sans-serif; padding:20px; background:#f5f7fb;">
+          <div style="max-width:650px; margin:auto; background:#ffffff; padding:22px;
+                      border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,0.08);">
+
+            <h2 style="color:#1b7a1b; margin-top:0;">Payment Successfully Verified</h2>
+
+            <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+
+            <p>
+              We are pleased to inform you that your payment for the  
+              <strong>PGCPAITL Application</strong> has been 
+              <span style="font-weight:bold; color:#1b7a1b;">verified and approved</span>.
+            </p>
+
+            <p><b>Application ID:</b> ${app.pretty_id}</p>
+
+            <p>
+              Your application will now proceed to the next stage of admission processing.
+              You will receive further communication from the Admissions Team.
+            </p>
+
+            <p style="margin-top:20px;">
+              Regards,<br/>
+              <strong>PGCPAITL Admissions Team</strong><br/>
+              JNTU-GV & DSNLU
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    else if (status === "rejected") {
+      subject = `PGCPAITL – Payment Rejected (ID: ${app.pretty_id})`;
+
+      html = `
+        <div style="font-family:Arial, sans-serif; padding:20px; background:#f5f7fb;">
+          <div style="max-width:650px; margin:auto; background:#ffffff; padding:22px;
+                      border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,0.08);">
+
+            <h2 style="color:#b00020; margin-top:0;">Payment Verification Failed</h2>
+
+            <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+
+            <p>
+              Unfortunately, we could not verify your payment submission for  
+              the <strong>PGCPAITL Application</strong>.
+            </p>
+
+            <p><b>Application ID:</b> ${app.pretty_id}</p>
+
+            <p>
+              Please re-upload clear payment proof (UTR screenshot) using the payment link provided earlier.
+              Make sure the UTR number is visible and matches your transaction.
+            </p>
+
+            <p>
+              If you believe this is an error, please contact the Admissions Team with supporting documents.
+            </p>
+
+            <p style="margin-top:20px;">
+              Regards,<br/>
+              <strong>PGCPAITL Admissions Team</strong><br/>
+              JNTU-GV & DSNLU
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    else {
+      console.warn("sendPaymentStatusUpdate: Unsupported status", status);
+      return;
+    }
+
+    // Finally send email
+    return sendMail(app.email, subject, html);
+
+  } catch (err) {
+    console.error("sendPaymentStatusUpdate() FAILED:", err);
+  }
+}
+
+
+// ------------------------------------------------------------------
 // EMAIL TEMPLATE 5: Payment Activation
 // ------------------------------------------------------------------
 // function paymentActivationEmail(app, id) {
@@ -267,5 +439,8 @@ module.exports = {
   statusUpdateEmail,
   // paymentActivationEmail,
   announcementBlock,
+  paymentRecivedEmail,
+  sendPaymentStatusUpdate,
   layout
+
 };
