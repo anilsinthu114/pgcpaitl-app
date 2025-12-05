@@ -113,7 +113,6 @@ function layout(content) {
 // ------------------------------------------------------------------
 function applicantSubmissionEmail(app, id) {
   return layout(`
-    ${announcementBlock()}
 
     <h2 style="color:#003c7a;margin-top:10px;">Application Successfully Submitted</h2>
 
@@ -438,7 +437,7 @@ module.exports = {
   adminNotificationEmail,
   statusUpdateEmail,
   // paymentActivationEmail,
-  announcementBlock,
+  // announcementBlock,
   paymentRecivedEmail,
   sendPaymentStatusUpdate,
   layout

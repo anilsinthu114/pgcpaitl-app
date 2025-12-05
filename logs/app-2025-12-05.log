@@ -80,3 +80,6 @@
 2025-12-05 22:08:22 [INFO]: Incoming request: GET /application/4 
 2025-12-05 22:08:24 [INFO]: Incoming request: PUT /application/4/status 
 2025-12-05 22:08:38 [INFO]: Incoming request: GET /application/list 
+2025-12-05 22:24:29 [INFO]: Incoming request: GET /admin/dashboard.html 
+2025-12-05 22:24:29 [INFO]: Incoming request: GET /dashboard.js 
+2025-12-05 22:24:29 [INFO]: Incoming request: GET /application/list 
