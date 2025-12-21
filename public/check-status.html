@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Check Application Status - PGCPAITL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/modern-student.css">
+</head>
+
+<body>
+
+    <div class="page">
+        <div class="card" style="max-width: 500px; margin: 0 auto;">
+
+            <div class="form-header">
+                <div class="header-logo">
+                    <img src="/jntugv-logo.png" alt="Logo">
+                </div>
+                <div class="header-title">
+                    <h1>Track Application</h1>
+                    <h2>Check current status of your admission form</h2>
+                </div>
+            </div>
+
+            <form id="trackForm">
+                <div class="form-group">
+                    <label>Application ID</label>
+                    <input type="text" id="appId" placeholder="e.g. 123 or PGCPAITL-2025-000123" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Registered Email or Mobile</label>
+                    <input type="text" id="identifier" placeholder="Email or Mobile used to apply" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%">Check Status</button>
+            </form>
+
+            <div id="result" class="status-result" style="display:none;">
+                <h3 id="resName" style="margin:0 0 10px;"></h3>
+                <div id="resBadge" class="status-badge"></div>
+                <p id="resMsg" style="margin-bottom:0"></p>
+
+                <div id="payAction" style="margin-top:15px; display:none;">
+                    <a href="#" id="payLink" class="btn-primary"
+                        style="display:inline-block; text-decoration:none;">Make Payment</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/check-status.js" defer></script>
+
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+2025-12-14 13:52:55 [ERROR]: Unknown column 'parent_name' in 'field list' 
+2025-12-14 13:58:32 [ERROR]: Unknown column 'parent_name' in 'field list' 
+2025-12-14 13:59:08 [ERROR]: Unknown column 'passing_year' in 'field list' 
+2025-12-14 14:00:21 [ERROR]: Unknown column 'declaration' in 'field list' 
+2025-12-14 14:00:32 [ERROR]: Unknown column 'declaration' in 'field list' 
+2025-12-14 14:01:13 [ERROR]: Column count doesn't match value count at row 1 
+2025-12-14 14:04:58 [ERROR]: Unknown column 'declaration' in 'field list' 
+2025-12-14 14:10:15 [ERROR]: Column count doesn't match value count at row 1 
+2025-12-14 14:30:41 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?
+    )' at line 17 
+2025-12-14 14:32:45 [ERROR]: Column 'fullName' cannot be null 
+2025-12-14 14:42:59 [ERROR]: Incorrect datetime value: 'submitted' for column 'created_at' at row 1 
+2025-12-14 14:48:15 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?,?
+)' at line 16 
+2025-12-14 14:50:01 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?,?,)' at line 16 
+2025-12-14 14:52:06 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?
+)' at line 16 
+2025-12-14 14:55:47 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?
+)' at line 16 
+2025-12-14 14:58:03 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?
+)' at line 16 

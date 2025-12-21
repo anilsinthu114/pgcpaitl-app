@@ -6,7 +6,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const errorDiv = document.getElementById('error');
 
   try {
-    const res = await fetch('/admin/login', {
+    const res = await fetch('/api/admin/login', {
       method: 'POST', // ✅ use POST, not GET
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -33,7 +33,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const errorDiv = document.getElementById('error');
 
   try {
-    const res = await fetch('/admin/login', {
+    const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -44,7 +44,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     if (data.ok) {
       localStorage.setItem('adminToken', data.token);
-      window.location.href = '/admin/adminDashboard.html';
+      window.location.href = '/admin/dashboard.html';
     } else {
       errorDiv.textContent = data.error || 'Invalid credentials';
       errorDiv.style.display = 'block';

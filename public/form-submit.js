@@ -7,9 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Submit triggered.");   // <--- MUST SEE THIS IN BROWSER
   
       const fd = new FormData(form);
+      console.log("FormData:", fd);
       console.log("FormData prepared:", fd); // <--- CHECK IF FormData IS PREPARED
   
-      const r = await fetch("/application/submit", {
+      const r = await fetch("/application/draft", {
         method: "POST",
         body: fd,
       });

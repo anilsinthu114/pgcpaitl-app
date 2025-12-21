@@ -8,111 +8,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- External CSS -->
-  <link rel="stylesheet" href="/payment.css" />
-
+  <!-- External CSS -->
+  <link rel="stylesheet" href="/css/modern-student.css">
+  <link rel="stylesheet" href="/css/gateway.css">
   <style>
-    body {
-      background: #f5f7fb;
-      margin: 0;
-      font-family: system-ui, Arial, sans-serif;
-      color: #222;
-    }
-
-    .page {
-      max-width: 1080px;
-      margin: 24px auto;
-      padding: 16px;
-    }
-
-    .header-box {
-      text-align: center;
-      padding: 20px;
-      margin-bottom: 22px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-    }
-
-    .header-box h1 {
-      margin: 0;
-      color: #004c97;
-      font-size: 1.8rem;
-    }
-
-    .header-box p {
-      color: #444;
-      font-size: 0.95rem;
-      margin-top: 6px;
-    }
-
+    /* Specific overrides for payment layout */
     .payment-container {
       display: flex;
       gap: 24px;
       flex-wrap: wrap;
     }
 
-    .card {
+    .payment-card {
       background: #fff;
       flex: 1;
       min-width: 320px;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-    }
-
-    h3 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      color: #003c7a;
-    }
-
-    .bank-details p {
-      margin: 6px 0;
-      font-size: 0.95rem;
-    }
-
-    label {
-      font-weight: 600;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      font-size: 0.95rem;
-      border: 1px solid #cfd6e4;
       border-radius: 8px;
-      margin-top: 6px;
-      margin-bottom: 14px;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #004c97;
-      box-shadow: 0 0 0 3px rgba(0, 76, 151, 0.15);
-    }
-
-    #submitBtn {
-      background: #004c97;
-      color: #fff;
-      padding: 12px 22px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    #submitBtn:hover {
-      background: #00366f;
-    }
-
-    #payMsg {
-      font-size: 0.9rem;
-      min-height: 20px;
-      margin-top: -8px;
-      margin-bottom: 10px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      border-top: 5px solid var(--primary);
     }
 
     .qr-box {
@@ -121,99 +35,113 @@
 
     .qr-box img {
       width: 100%;
-      border-radius: 12px;
-      border: 1px solid #e0e0e0;
-    }
-
-    .note {
-      font-size: 0.85rem;
-      color: #666;
-      margin-top: 10px;
-    }
-
-    .info-banner {
-      background: #fff8e6;
-      border-left: 5px solid #f4a100;
-      padding: 14px 18px;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      color: #805b00;
-      margin-bottom: 22px;
-    }
-
-    @media (max-width: 600px) {
-      .header-box h1 {
-        font-size: 1.4rem;
-      }
+      max-width: 300px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
     }
   </style>
+</head>
 </head>
 
 <body>
 
-  <div class="page">
+  <div class="gateway-wrapper">
 
-    <div class="header-box">
-      <h1>PGCPAITL — Registration Fee Payment</h1>
-      <p>Submit your ₹1,000 registration fee via SBI QR or Bank Transfer</p>
+    <!-- LEFT PANEL: ORDER SUMMARY -->
+    <div class="gateway-left">
+      <div class="order-header">
+        <h2>Secure Checkout</h2>
+        <h1>PGCPAITL Registration</h1>
+      </div>
+
+      <div class="order-amount">
+        <div class="amount-label">Total Amount Due</div>
+        <div class="amount-value">₹1,000.00</div>
+        <div style="font-size:12px; opacity:0.6; margin-top:5px;">Non-refundable Registration Fee</div>
+      </div>
+
+      <div class="order-details">
+        <p><span>Application ID</span> <strong id="displayAppId">Loading...</strong></p>
+        <p><span>Program</span> <strong>Artificial Intelligence, Technology & Law</strong></p>
+        <p><span>University</span> <strong>JNTU-GV & DSNLU</strong></p>
+        <p><span>Session</span> <strong>2025-2026</strong></p>
+      </div>
+
+      <div class="gateway-footer">
+        © 2025 JNTU-GV. Secure Payment Portal.
+      </div>
     </div>
 
-    <div class="info-banner">
-      Please complete the payment and upload valid proof. Your application will be processed only after payment is
-      verified by the Admissions Team.
-    </div>
+    <!-- RIGHT PANEL: PAYMENT ACTIONS -->
+    <div class="gateway-right">
 
-    <div class="payment-container">
+      <div class="payment-title">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.9 5.4z" />
+        </svg>
+        Complete Your Payment
+      </div>
 
-      <!-- Left Panel: Payment Form + Bank Details -->
-      <div class="card">
-        <h3>Bank Payment Details</h3>
+      <div class="payment-methods">
+        <div class="method-card active">
+          <h3>Scan QR / UPI</h3>
+        </div>
+      </div>
 
-        <div class="bank-details">
-          <p><strong>Bank:</strong> State Bank of India</p>
-          <p><strong>Account Name:</strong> Registrar (PGCP)</p>
-          <p><strong>Account No:</strong> 44706716775</p>
-          <p><strong>IFSC:</strong> SBIN0063645</p>
-          <p><strong>Branch:</strong> JNTU Campus Branch – Vizianagaram</p>
-          <p><strong>Amount:</strong> ₹1,000</p>
+      <div class="info-banner"
+        style="font-size:13px; margin-bottom:25px; padding:10px; background:#e3f2fd; border-left:3px solid #0288d1; border-radius:4px; color:#01579b;">
+        Step 1: Scan the QR code using any UPI app (GPay/PhonePe).<br>
+        Step 2: Enter the UTR number and upload screenshot below.
+      </div>
+
+      <div class="payment-content">
+        <!-- QR SECTION -->
+        <div class="qr-section">
+          <div class="qr-frame">
+            <img src="/qr/sbi-qr.jpg" alt="SBI QR Code">
+          </div>
+          <div style="font-size:12px; color:#666;">
+            <strong>State Bank of India</strong><br>
+            Acc: 44706716775<br>
+            IFSC: SBIN0063645
+          </div>
         </div>
 
-        <h3>Upload Payment Proof</h3>
-
-        <form id="payForm" enctype="multipart/form-data" >
-          
+        <!-- FORM SECTION -->
+        <div class="form-section">
+          <form id="payForm" enctype="multipart/form-data">
             <input type="hidden" name="application_id" id="application_id">
 
-          <label>Enter UTR Number : <span class="required">*</span></label>
-          <input type="text" name="utr" id="utr" required placeholder="Enter UTR / Reference No.">
+            <div class="input-group">
+              <label>UTR / Reference Number <span style="color:red">*</span></label>
+              <input type="text" name="utr" id="utr" required placeholder="Ex: 403918293..." autocomplete="off">
+            </div>
+            <div class="input-group">
+              <label for="screenshot">Upload Payment Screenshot <span style="color:red">*</span></label>
+              <input type="file" name="screenshot" id="screenshot" accept="image/jpeg,image/png,image/jpg" required
+                style="border: 1px dashed #cbd5e1; padding: 12px; background: #f8fafc; width: 100%; border-radius: 6px; cursor: pointer; font-size: 13px;">
+              <p style="font-size: 12px; color: #64748b; margin-top: 8px; line-height: 1.4;">
+                Please upload a clear screenshot of the successful transaction showing the UTR number (JPG, JPEG, or
+                PNG).
+              </p>
+            </div>
 
+            <div id="payMsg" style="margin-bottom:15px; font-size:13px;"></div>
 
-         
-          <label>Upload Screenshot (JPG / PNG )  :<span class="required">*</span></label>
-          <input type="file" name="screenshot" id="screenshot" accept="image/*" title="Upload payment proof screenshot in JPG, PNG, or PDF format" required>
+            <button id="submitBtn" type="submit" class="btn-pay">
+              Verify & Submit Payment
+            </button>
+          </form>
 
-          <div id="payMsg"></div>
-
-          <button id="submitBtn" type="submit">Submit Payment</button>
-        </form>
-      </div>
-
-      <!-- Right Panel: QR Code -->
-      <div class="card qr-box">
-        <h3>SBI QR Code</h3>
-
-        <img src="/qr/sbi-qr.jpg" alt="SBI QR Code">
-
-        <p class="note">
-          Scan using any UPI app (GPay, PhonePe, PayTM, BHIM, SBI Yono).  
-          Then upload UTR & screenshot in the form.
-        </p>
+          <div class="secure-badge">
+            🔒 SSL Secured Transaction
+          </div>
+        </div>
       </div>
 
     </div>
-
   </div>
-
 
   <script src="/payment.js" defer></script>
 </body>

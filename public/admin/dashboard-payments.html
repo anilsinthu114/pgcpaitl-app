@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Payments Dashboard - PGCPAITL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/modern-admin.css">
+    <style>
+        /* Specific overrides for payments page if needed */
+        .payments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard-wrapper">
+
+        <!-- TOP NAVIGATION -->
+        <header class="top-nav-container">
+            <div class="nav-brand">
+                <h2> PG Certification Programme in AI , Technology and Law </h2>
+                <small style="margin-top:4px; display:block; opacity:0.9;">JNTU-GV & DSNLU Collaborative
+                    Programme</small>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="/admin/dashboard.html" class="tab-btn">Applications</a></li>
+                <li class="active"><a href="/admin/dashboard-payments.html" class="tab-btn active">Payments</a></li>
+            </ul>
+
+            <button id="logoutBtn" class="logout-btn-nav">Logout</button>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <div class="top-bar">
+                <h1 class="page-title">Payments Overview</h1>
+                <div style="font-size:14px; color:#666;">
+                    Financial Overview & Verification
+                </div>
+            </div>
+
+            <!-- PAYMENTS STATS -->
+            <div class="stats-grid payments-grid">
+                <!-- 1. Total Collected -->
+                <div class="stat-card">
+                    <h3 style="border-left: 3px solid var(--success); padding-left: 8px;">Total Collected</h3>
+                    <div class="stat-value" id="totalCollected" style="color:var(--success)">₹ 0</div>
+                    <small class="text-muted">Verified Payments</small>
+                </div>
+
+                <!-- 2. Pending Verification -->
+                <div class="stat-card">
+                    <h3 style="border-left: 3px solid var(--warning); padding-left: 8px;">Pending Amount</h3>
+                    <div class="stat-value" id="pendingAmount" style="color:var(--warning)">₹ 0</div>
+                    <small class="text-muted">Uploaded (Unverified)</small>
+                </div>
+
+                <!-- 3. Pending Count -->
+                <div class="stat-card">
+                    <h3 style="border-left: 3px solid var(--info); padding-left: 8px;">Pending Verification</h3>
+                    <div class="stat-value" id="pendingCount" style="color:var(--info)">0</div>
+                    <small class="text-muted">Requests to Review</small>
+                </div>
+
+                <!-- 4. Rejected -->
+                <div class="stat-card">
+                    <h3 style="border-left: 3px solid var(--danger); padding-left: 8px;">Rejected</h3>
+                    <div class="stat-value" id="rejectedCount" style="color:var(--danger)">0</div>
+                    <small class="text-muted">Failed Payments</small>
+                </div>
+            </div>
+
+            <div id="loading" style="text-align:center; padding:20px; color:#666;">Loading payments...</div>
+
+            <!-- PAYMENTS TABLE -->
+            <div class="table-container">
+                <table id="paymentsTable" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Applicant</th>
+                            <th>Amount</th>
+                            <th>UTR / Ref</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Screenshot</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsBody">
+                        <!-- JS Injects Here -->
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="/admin/dashboard-payments.js"></script>
+</body>
+
+</html>

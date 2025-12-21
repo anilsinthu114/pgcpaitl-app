@@ -1,79 +1,212 @@
-console.log("💰 Payments Dashboard loaded");
+// =====================
+// AUTH CHECK
+// =====================
+const token = localStorage.getItem("adminToken");
+if (!token) {
+  window.location.href = "/admin/login.html";
+}
 
-const token2 = localStorage.getItem("adminToken");
-if (!token2) location.href = "/login.html";
+const APP_FEE = 1000; // Currently in Registration Phase (Registration: 1000, Course: 3500)
 
-async function auth2(url, opt = {}) {
+async function fetchWithAuth(url, options = {}) {
   return fetch(url, {
-    ...opt,
-    headers: { "Authorization": "Bearer " + token2, ...opt.headers }
-  });
-}
-
-document.addEventListener("DOMContentLoaded", loadPayments);
-
-async function loadPayments() {
-  const root = document.getElementById("paymentsRoot");
-  root.innerHTML = `<p>Loading...</p>`;
-
-  const res = await auth2("/admin/payments/list");
-  const j = await res.json();
-
-  if (!j.ok) return (root.innerHTML = "Failed loading payments");
-
-  let html = `<table class="admin-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Application ID</th>
-          <th>UTR</th>
-          <th>Status</th>
-          <th>Screenshot</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  j.payments.forEach(p => {
-    html += `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.application_id}</td>
-        <td>${p.utr}</td>
-        <td>${p.status}</td>
-        <td><a href="${p.screenshot_path}" target="_blank">View</a></td>
-        <td>
-          <button class="verify-btn" data-id="${p.id}" data-status="verified">Verify</button>
-          <button class="reject-btn" data-id="${p.id}" data-status="rejected">Reject</button>
-        </td>
-      </tr>`;
-  });
-
-  html += `</tbody></table>`;
-  root.innerHTML = html;
-
-  document.querySelectorAll(".verify-btn").forEach(btn =>
-    btn.addEventListener("click", () => updatePayment(btn.dataset.id, "verified"))
-  );
-  document.querySelectorAll(".reject-btn").forEach(btn =>
-    btn.addEventListener("click", () => updatePayment(btn.dataset.id, "rejected"))
-  );
-}
-
-async function updatePayment(id, status) {
-  const res = await auth2(`/payment/${id}/status`, {
-    method: "PUT",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ status })
-  });
-
-  const j = await res.json();
-  if (j.ok) {
-    alert("Payment updated");
-    loadPayments();
-  }
-    else {
-    alert("Failed to update payment");  
+    ...options,
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      ...options.headers
     }
+  });
+}
+
+// =====================
+// INIT
+// =====================
+document.addEventListener("DOMContentLoaded", () => {
+  // Logout
+  document.getElementById("logoutBtn")?.addEventListener("click", () => {
+    localStorage.removeItem("adminToken");
+    window.location.href = "/login.html";
+  });
+
+  loadPayments();
+});
+
+// =====================
+// LOAD PAYMENTS
+// =====================
+async function loadPayments() {
+  const loading = document.getElementById("loading");
+  if (loading) loading.style.display = "block";
+
+  try {
+    const res = await fetchWithAuth("/api/admin/payments/list");
+    const data = await res.json();
+
+    if (loading) loading.style.display = "none";
+
+    if (!data.ok) {
+      showToast("Failed to load payments: " + (data.error || "Unknown error"), "error");
+      return;
+    }
+
+    renderPayments(data.payments);
+  } catch (err) {
+    console.error(err);
+    if (loading) loading.innerText = "Error loading data.";
+  }
+}
+
+function renderPayments(payments) {
+  const tbody = document.getElementById("paymentsBody");
+  tbody.innerHTML = "";
+
+  // 1. Calculate Stats
+  let totalCollected = 0;
+  let pendingAmount = 0;
+  let pendingCount = 0;
+  let rejectedCount = 0;
+
+  payments.forEach(p => {
+    if (p.status === 'verified') {
+      totalCollected += APP_FEE;
+    } else if (p.status === 'uploaded') {
+      pendingAmount += APP_FEE;
+      pendingCount++;
+    } else if (p.status === 'rejected') {
+      rejectedCount++;
+    }
+  });
+
+  // Update Stats UI
+  updateStat("totalCollected", `₹ ${totalCollected.toLocaleString()}`);
+  updateStat("pendingAmount", `₹ ${pendingAmount.toLocaleString()}`);
+  updateStat("pendingCount", pendingCount);
+  updateStat("rejectedCount", rejectedCount);
+
+  // 2. Render Table
+  payments.forEach(p => {
+    const tr = document.createElement("tr");
+
+    // Status Badge Logic
+    let badgeClass = "reviewing"; // default yellow
+    if (p.status === 'verified') badgeClass = 'accepted';
+    if (p.status === 'rejected') badgeClass = 'rejected';
+
+    // Actions
+    let actions = "";
+    if (p.status === 'uploaded') {
+      actions = `
+        <button class="btn-sm js-verify-btn" data-id="${p.id}" style="background:var(--success); margin-right:5px;">Verify</button>
+        <button class="btn-sm js-reject-btn" data-id="${p.id}" style="background:var(--danger);">Reject</button>
+      `;
+    } else {
+      actions = `<span style="color:#777; font-size:12px;">Completed</span>`;
+    }
+
+    tr.innerHTML = `
+      <td>${p.id}</td>
+      <td>
+        <div style="font-weight:600; color:var(--primary);">${escapeHtml(p.fullName)}</div>
+        <div style="font-size:11px; color:#666;">${escapeHtml(p.email)}</div>
+        <div style="font-size:11px; color:#666;">${escapeHtml(p.mobile)}</div>
+      </td>
+      <td>₹ ${APP_FEE}</td>
+      <td style="font-family:monospace;">${escapeHtml(p.utr)}</td>
+      <td><span class="status ${badgeClass}">${p.status}</span></td>
+      <td>${new Date(p.uploaded_at).toLocaleDateString()}</td>
+      <td>
+        <button class="btn-sm js-view-screenshot-btn" data-url="/api/payment/screenshot/${p.id}?token=${token}" style="background:#007bff; color:white; border:none; padding:4px 8px; font-size:11px; cursor:pointer;">View ScreenShot</button>
+      </td>
+      <td>${actions}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateStat(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = val;
+}
+
+// =====================
+// ACTIONS
+// =====================
+document.addEventListener("click", async (e) => {
+  // Verify
+  if (e.target.classList.contains("js-verify-btn")) {
+    const id = e.target.dataset.id;
+    if (confirm("Verify this payment? This will mark the application as verified.")) {
+      await updatePaymentStatus(id, "verify");
+    }
+  }
+
+  // Reject
+  if (e.target.classList.contains("js-reject-btn")) {
+    const id = e.target.dataset.id;
+    if (confirm("Reject this payment?")) {
+      await updatePaymentStatus(id, "reject");
+    }
+  }
+
+  // View Screenshot (CSP Safe)
+  if (e.target.classList.contains("js-view-screenshot-btn")) {
+    const url = e.target.dataset.url;
+    if (url) window.open(url, "_blank");
+  }
+});
+
+async function updatePaymentStatus(id, action) {
+  // action = 'verify' or 'reject'
+  // Endpoint: /admin/payment/:id/verify  OR  /admin/payment/:id/reject
+  const res = await fetchWithAuth(`/admin/payment/${id}/${action}`, { method: "PUT" });
+  const data = await res.json();
+
+  if (data.ok) {
+    showToast(`Payment ${action}ed successfully.`, "success");
+    loadPayments();
+  } else {
+    showToast("Error: " + (data.error || "Failed"), "error");
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* =====================================================
+   TOAST NOTIFICATION UTILS
+===================================================== */
+function showToast(message, type = 'info') {
+  // Icons
+  const icons = {
+    success: '✓',
+    error: '✕',
+    info: 'ℹ'
+  };
+
+  // Container
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  // Toast Element
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || 'ℹ'}</span>
+        <span class="toast-message">${escapeHtml(message)}</span>
+    `;
+
+  container.appendChild(toast);
+
+  // Auto remove
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-20px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }

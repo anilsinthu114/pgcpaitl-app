@@ -151,8 +151,16 @@ function applicantSubmissionEmail(app, id) {
     </div>
 
     <p style="margin-top:20px;color:#444;font-size:14px;">
-      You will be notified once the payment gateway is activated.
+       Your application has been submitted successfully. Please make the payment of ₹1,000/- through the payment link provided in the application form.
+       Then only Your Application will be processed and Accpeted for the Certification Course.
+
     </p>
+    <div style="text-align:center;margin-top:20px;">
+      <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${id}" 
+         style="background-color:#003c7a;color:#fff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:bold;display:inline-block;">
+        Pay Now
+      </a>
+    </div>
   `);
 }
 
@@ -208,7 +216,9 @@ function statusUpdateEmail(app, status) {
     </div>
 
     <p style="margin-top:18px;">
-      You may log in to the portal to view additional updates.
+    Be Formal and Professional in your communication.
+    <br>
+     You may Contact us through a mail at <a href="mailto:pgcpaitl@jntugv.edu.in">pgcpaitl@jntugv.edu.in</a>
     </p>
   `);
 }
@@ -237,6 +247,10 @@ function paymentReceivedEmail(appObj, prettyId, utr) {
           <tr>
             <td><b>Application ID:</b></td>
             <td>${prettyId}</td>
+          </tr>
+          <tr>
+            <td><b>Payment ID:</b></td>
+            <td>${appObj.paymentId}</td>
           </tr>
           <tr>
             <td><b>UTR / Reference No:</b></td>
@@ -387,6 +401,51 @@ async function sendPaymentStatusUpdate(application_id, status) {
 
 
 // ------------------------------------------------------------------
+// EMAIL TEMPLATE 8: Payment Pending Notification
+// ------------------------------------------------------------------
+function paymentPendingEmail(app, prettyId) {
+  return layout(`
+    <h2 style="color:#d9534f; margin-top:0;">Action Required: Payment Pending</h2>
+
+    <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+
+    <p>
+      We have received your request to submit your application (ID: <strong>${prettyId}</strong>).
+    </p>
+
+    <p>
+      However, our records indicate that the <strong>Registration Fee Payment</strong> has not yet been verified.
+      Your application status is temporarily set to <span style="color:#d9534f; font-weight:bold;">PAYMENT PENDING</span>.
+    </p>
+
+    <div style="
+      background:#fff8e6;
+      border-left:4px solid #e4a11b;
+      padding:12px;
+      border-radius:8px;
+      font-size:14px;
+      color:#6a4a00;
+      margin:20px 0;
+    ">
+      <strong>Next Steps:</strong>
+      <ul style="margin:6px 0 0 18px;padding:0;">
+        <li>If you haven't paid yet, please complete the payment immediately.</li>
+        <li>If you have paid, please upload the payment proof (UTR screenshot) via the portal.</li>
+        <li>Once verified, your application will be automatically marked as <strong>SUBMITTED</strong>.</li>
+      </ul>
+    </div>
+
+    <p style="text-align:center; margin-top:25px;">
+      <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${prettyId}" 
+         style="padding:12px 24px; background:#004c97; color:#white; border-radius:6px; text-decoration:none; font-weight:bold;">
+        Proceed to Payment
+      </a>
+    </p>
+  `);
+}
+
+
+// ------------------------------------------------------------------
 // EMAIL TEMPLATE 5: Payment Activation
 // ------------------------------------------------------------------
 // function paymentActivationEmail(app, id) {
@@ -428,6 +487,39 @@ async function sendPaymentStatusUpdate(application_id, status) {
 // }
 
 // ------------------------------------------------------------------
+// EMAIL TEMPLATE 9: Verified Application Success
+// ------------------------------------------------------------------
+function applicationVerifiedSuccessEmail(app, id) {
+  return layout(`
+    <h2 style="color:#28a745; margin-top:0;">Application Submitted & Verified</h2>
+
+    <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+
+    <p>
+      We are pleased to confirm that your application for the 
+      <strong>PG Certificate Programme in Artificial Intelligence, Technology & Law (PGCPAITL)</strong> 
+      has been successfully received.
+    </p>
+    
+    <p><b>Application ID:</b> ${id}</p>
+
+    <div style="background:#e8f5e9; border:1px solid #c3e6cb; border-radius:6px; padding:15px; margin:20px 0;">
+      <p style="margin:0; color:#155724; font-weight:bold;">✅ Payment Status: Verified</p>
+      <p style="margin:5px 0 0; color:#155724;">Your application is now complete and under final review by the Admissions Committee.</p>
+    </div>
+
+    <p>
+      You will receive an official Offer Letter / Admission status update shortly via email.
+    </p>
+
+    <p style="margin-top:20px;">
+      Regards,<br/>
+      <strong>PGCPAITL Admissions Team</strong>
+    </p>
+  `);
+}
+
+// ------------------------------------------------------------------
 // MAIL SENDER WRAPPER
 // ------------------------------------------------------------------
 async function sendMail(to, subject, html, cc = process.env.EMAIL_TO) {
@@ -446,6 +538,8 @@ module.exports = {
   // announcementBlock,
   paymentReceivedEmail,
   sendPaymentStatusUpdate,
+  paymentPendingEmail,
+  applicationVerifiedSuccessEmail,
   layout
 
 };

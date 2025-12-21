@@ -1,0 +1,28 @@
+2025-12-21 12:27:38 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?
+)' at line 16 
+2025-12-21 12:27:45 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?
+)' at line 16 
+2025-12-21 12:39:32 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOW(),NOW(),
+  'submitted','draft',0
+)' at line 15 
+2025-12-21 12:41:37 [ERROR]: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOW(),NOW(),
+  'submitted','draft',0
+)' at line 15 
+2025-12-21 12:46:44 [ERROR]: Unknown column 'institutionName' in 'field list' 
+2025-12-21 12:57:29 [ERROR]: Unknown column 'created_at' in 'field list' 
+2025-12-21 12:59:21 [ERROR]: Unknown column 'is_legacy' in 'field list' 
+2025-12-21 13:07:43 [ERROR]: Duplicate entry 'anilsinthu114@gmail.com' for key 'applications.email' 
+2025-12-21 13:49:06 [ERROR]: Duplicate entry 'anilsinthu@outlook.com' for key 'applications.email' 
+2025-12-21 13:49:09 [ERROR]: Duplicate entry 'anilsinthu@outlook.com' for key 'applications.email' 
+2025-12-21 13:59:39 [ERROR]: r is not defined 
+2025-12-21 14:15:16 [ERROR]: r is not defined 
+2025-12-21 16:01:24 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\47\payment_1765808112969.png' 
+2025-12-21 16:22:52 [ERROR]: The user specified as a definer ('pgcuser'@'127.0.0.1') does not exist 
+2025-12-21 16:41:55 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\9\payment_1765341350176.png' 
+2025-12-21 16:42:04 [ERROR]: The user specified as a definer ('pgcuser'@'127.0.0.1') does not exist 
+2025-12-21 16:44:45 [ERROR]: The user specified as a definer ('pgcuser'@'127.0.0.1') does not exist 
+2025-12-21 17:13:35 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\9\payment_1765341350176.png' 
+2025-12-21 17:14:18 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\11\payment_1765351176444.png' 
+2025-12-21 17:14:29 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\47\payment_1765808112969.png' 
+2025-12-21 17:15:41 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\37\payment_1765555130301.png' 
+2025-12-21 21:37:27 [ERROR]: Screenshot missing ENOENT: no such file or directory, access 'E:\Anil\pgcpaitl-app\uploads\payments\20\payment_1765425174882.png' 

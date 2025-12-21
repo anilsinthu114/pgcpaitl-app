@@ -27,6 +27,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     url.searchParams.get("application_id");
 
   console.log("🔍 Extracted prettyId:", prettyId);
+  if (prettyId) {
+    const dispEl = document.getElementById("displayAppId");
+    if (dispEl) dispEl.innerText = prettyId;
+  }
 
   if (!prettyId) {
     alert("Invalid payment link — Application ID missing.");

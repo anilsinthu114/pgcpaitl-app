@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS applications (
   country VARCHAR(100) NOT NULL,
   degreeLevel VARCHAR(100) NOT NULL,
   specialization VARCHAR(255) NOT NULL,
+  instituteName VARCHAR(255) NOT NULL,
   university VARCHAR(255) NOT NULL,
   passingYear VARCHAR(10) NOT NULL,
   studyMode VARCHAR(50) NOT NULL,
@@ -34,6 +35,9 @@ CREATE TABLE IF NOT EXISTS applications (
   sop TEXT ,
   commMode VARCHAR(255),
   declarations JSON,
+  flow_state ENUM('draft','submitted','reviewing','accepted','rejected') DEFAULT 'draft', 
+  is_legacy BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   status ENUM('submitted','reviewing','accepted','rejected') DEFAULT 'submitted'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -65,6 +69,8 @@ CREATE TABLE IF NOT EXISTS payment_logs (
   utr VARCHAR(100) NOT NULL,
   screenshot_path VARCHAR(1000),
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -88,6 +94,7 @@ CREATE TABLE application_payments (
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP 
         ON UPDATE CURRENT_TIMESTAMP,
+  
 
     FOREIGN KEY (application_id) 
         REFERENCES applications(id) 
