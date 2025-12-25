@@ -1,0 +1,124 @@
+<!doctype html>
+<!-- cSpell:words PGCPAITL PGCP IFSC JNTU Vizianagaram BHIM Yono GPay PhonePe PayTM -->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>PGCPAITL — Course Fee Payment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="/css/modern-student.css">
+    <link rel="stylesheet" href="/css/gateway.css">
+
+</head>
+
+<body>
+
+    <div class="gateway-wrapper">
+
+        <!-- LEFT PANEL: ORDER SUMMARY -->
+        <div class="gateway-left">
+            <div class="order-header">
+                <h2>Secure Checkout</h2>
+                <h1>PGCPAITL Course Fee</h1>
+            </div>
+
+            <div class="order-amount">
+                <div class="amount-label">Total Amount Due</div>
+                <div class="amount-value">₹30,000.00</div>
+                <div style="font-size:12px; opacity:0.6; margin-top:5px;">First Installment / Full Fee</div>
+            </div>
+
+            <div class="order-details">
+                <p><span>Application ID</span> <strong id="displayAppId">Loading...</strong></p>
+                <p><span>Program</span> <strong>Artificial Intelligence, Technology & Law</strong></p>
+                <p><span>University</span> <strong>JNTU-GV & DSNLU</strong></p>
+                <p><span>Session</span> <strong>2025-2026</strong></p>
+            </div>
+
+            <div class="gateway-footer">
+                © 2025 JNTU-GV. Secure Payment Portal.
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: PAYMENT ACTIONS -->
+        <div class="gateway-right">
+
+            <div class="payment-title">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.9 5.4z" />
+                </svg>
+                Complete Your Payment
+            </div>
+
+            <div class="payment-methods">
+                <div class="method-card active">
+                    <h3>Scan QR / UPI</h3>
+                </div>
+            </div>
+
+            <div class="info-banner"
+                style="font-size:13px; margin-bottom:25px; padding:10px; background:#e3f2fd; border-left:3px solid #0288d1; border-radius:4px; color:#01579b;">
+                Step 1: Scan the QR code using any UPI app (GPay/PhonePe).<br>
+                Step 2: Enter the UTR number and upload screenshot below.
+            </div>
+
+            <div class="payment-content">
+                <!-- QR SECTION -->
+                <div class="qr-section">
+                    <div class="qr-frame">
+                        <!-- Ensure this image exists, user should place it -->
+                        <img src="/qr/sbi-qr.jpg" alt="Course Fee QR Code" onerror="this.src='/qr/sbi-qr.jpg'">
+                    </div>
+                    <div style="font-size:12px; color:#666;">
+                        <strong>State Bank of India</strong><br>
+                        Acc: 44706716775<br>
+                        IFSC: SBIN0063645
+                    </div>
+                </div>
+
+                <!-- FORM SECTION -->
+                <div class="form-section">
+                    <form id="payForm" enctype="multipart/form-data">
+                        <input type="hidden" name="application_id" id="application_id">
+                        <input type="hidden" name="payment_type" value="course_fee">
+
+                        <div class="input-group">
+                            <label>UTR / Reference Number <span style="color:red">*</span></label>
+                            <input type="text" name="utr" id="utr" required placeholder="Ex: 403918293..."
+                                autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="screenshot">Upload Payment Screenshot <span style="color:red">*</span></label>
+                            <input type="file" name="screenshot" id="screenshot" accept="image/jpeg,image/png,image/jpg"
+                                required
+                                style="border: 1px dashed #cbd5e1; padding: 12px; background: #f8fafc; width: 100%; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                            <p style="font-size: 12px; color: #64748b; margin-top: 8px; line-height: 1.4;">
+                                Please upload a clear screenshot of the successful transaction showing the UTR number
+                                (JPG, JPEG, or
+                                PNG).
+                            </p>
+                        </div>
+
+                        <div id="payMsg" style="margin-bottom:15px; font-size:13px;"></div>
+
+                        <button id="submitBtn" type="submit" class="btn-pay">
+                            Verify & Submit 30k Payment
+                        </button>
+                    </form>
+
+                    <div class="secure-badge">
+                        🔒 SSL Secured Transaction
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/payment.js" defer></script>
+</body>
+
+</html>

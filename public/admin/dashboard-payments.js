@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Logout
   document.getElementById("logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("adminToken");
-    window.location.href = "/login.html";
+    window.location.href = "/admin/login.html";
   });
 
   // View Toggle Logic
@@ -109,9 +109,9 @@ function renderPayments(payments) {
 
   payments.forEach(p => {
     if (p.status === 'verified') {
-      totalCollected += APP_FEE;
+      totalCollected += Number(p.amount || 1000);
     } else if (p.status === 'uploaded') {
-      pendingAmount += APP_FEE;
+      pendingAmount += Number(p.amount || 1000);
       pendingCount++;
     } else if (p.status === 'rejected') {
       rejectedCount++;
@@ -152,7 +152,8 @@ function renderPayments(payments) {
         <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(p.email)}</div>
         <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(p.mobile)}</div>
       </td>
-      <td>₹ ${APP_FEE}</td>
+      <td>₹ ${Number(p.amount || 1000).toLocaleString()}</td>
+      <td><strong>${p.payment_type === 'course_fee' ? 'Course Fee' : 'Registration'}</strong></td>
       <td style="font-family:monospace; font-weight:600;">${escapeHtml(p.utr)}</td>
       <td><span class="status ${badgeClass}">${p.status}</span></td>
       <td>${new Date(p.uploaded_at).toLocaleDateString()}</td>
@@ -188,9 +189,13 @@ function renderPayments(payments) {
        </div>
        
        <div class="app-card-row">
-         <span class="app-card-label">Amount</span>
-         <span style="font-weight:700;">₹ ${APP_FEE}</span>
-       </div>
+          <span class="app-card-label">Amount</span>
+          <span style="font-weight:700;">₹ ${Number(p.amount || 1000).toLocaleString()}</span>
+        </div>
+        <div class="app-card-row">
+          <span class="app-card-label">Type</span>
+          <span><strong>${p.payment_type === 'course_fee' ? 'Course Fee' : 'Registration'}</strong></span>
+        </div>
        <div class="app-card-row">
          <span class="app-card-label">UTR/Ref</span>
          <span style="font-family:monospace;">${escapeHtml(p.utr)}</span>

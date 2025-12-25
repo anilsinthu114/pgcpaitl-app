@@ -39,13 +39,20 @@ exports.submitPayment = async (req, res) => {
 
         const [r] = await conn.query(
             `INSERT INTO application_payments
-         (application_id,utr,screenshot_path,status)
-         VALUES (?,?,?,'uploaded')`,
-            [numericId, utr, screenshotPath]
+         (application_id,utr,screenshot_path,status,payment_type)
+         VALUES (?,?,?,?,?)`,
+            [numericId, utr, screenshotPath, 'uploaded', Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration')] // Handle array if mulitple inputs exist
         );
         const paymentId = `PGCPAITL-Pay-${String(r.insertId).padStart(6, "0")}`;
         debug("Payment submission created", r.insertId);
         debug("Payment submission created", { application_id, utr, screenshotPath });
+        if (!req.body.payment_type || req.body.payment_type === 'registration') {
+            await conn.query(
+                "UPDATE applications SET status='submitted', flow_state='submitted', submitted_at=NOW() WHERE id=? AND status='draft'",
+                [numericId]
+            );
+            debug("Application status updated to submitted (Registration Fee)");
+        }
 
         await conn.commit();
 
@@ -123,7 +130,17 @@ exports.verifyPayment = async (req, res) => {
         await conn.commit();
 
         debug("Sending payment status update email", { application_id: p.application_id });
-        Mailer.sendPaymentStatusUpdate(p.application_id, "verified");
+
+        // Fetch app details for email
+        const [[appInfo]] = await conn.query("SELECT email, fullName FROM applications WHERE id=?", [p.application_id]);
+        if (appInfo) {
+            const pid = prettyId(p.application_id);
+            Mailer.sendMail(
+                appInfo.email,
+                `PGCPAITL – Payment Verified (ID: ${pid})`,
+                Mailer.paymentVerifiedEmail(appInfo, pid)
+            );
+        }
         debug("Payment status update email sent", { application_id: p.application_id });
 
         debug("Payment verification completed", { id });
@@ -152,7 +169,7 @@ exports.rejectPayment = async (req, res) => {
         const appId = payment.application_id;
 
         await pool.query("UPDATE application_payments SET status='rejected' WHERE id=?", [id]);
-        await pool.query("UPDATE applications SET status='pending' WHERE id=?", [appId]);
+        await pool.query("UPDATE applications SET status='rejected' WHERE id=?", [appId]);
 
         const [apps] = await pool.query("SELECT email, fullName FROM applications WHERE id=?", [appId]);
         if (apps.length > 0) {
@@ -177,7 +194,8 @@ exports.listPayments = async (req, res) => {
     debug("Fetching all payments list");
     try {
         const [rows] = await pool.query(`
-      SELECT p.*, a.fullName, a.email, a.mobile
+      SELECT p.id, p.application_id, p.utr, p.status, p.uploaded_at, p.payment_type, p.amount,
+             a.fullName, a.email, a.mobile
       FROM application_payments p
       JOIN applications a ON p.application_id = a.id
       ORDER BY p.uploaded_at DESC

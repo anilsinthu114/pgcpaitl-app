@@ -130,6 +130,11 @@
           <div style="width:1px; background:#ddd; margin:0 5px;"></div>
           <button id="viewTableBtn" class="active">List View</button>
           <button id="viewGridBtn">Grid View</button>
+          <div style="width:1px; background:#ddd; margin:0 5px;"></div>
+          <button id="openGroupMailBtn"
+            style="background:#8e44ad; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600; font-size:0.9rem;">
+            ✉ Group Mail
+          </button>
         </div>
       </div>
 
@@ -147,6 +152,7 @@
               <th>Mobile</th>
               <th>Degree</th>
               <th>Status</th>
+              <th>Type</th>
               <th>Payment</th>
               <th>Submitted</th>
               <th>Action</th>
@@ -193,6 +199,42 @@
           style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">Reject</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- GROUP MAIL MODAL -->
+  <div id="groupMailModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <span id="closeGroupMailBtn" class="close">&times;</span>
+      <h2 style="color:var(--primary); margin-top:0;">Send Group Email</h2>
+
+      <div style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">To:</label>
+        <select id="groupMailTarget" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+          <option value="accepted">All Accepted Candidates</option>
+          <option value="submitted">All Submitted Candidates</option>
+          <option value="rejected">All Rejected Candidates</option>
+          <option value="all">Everyone (All Applicants)</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Subject:</label>
+        <input type="text" id="groupMailSubject" placeholder="Email Subject"
+          style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Message (HTML Allowed):</label>
+        <textarea id="groupMailMessage" rows="8" placeholder="Enter your message here..."
+          style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:inherit;"></textarea>
+      </div>
+
+      <div style="text-align:right;">
+        <button id="sendGroupMailBtn"
+          style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">Send
+          Broadcast</button>
+      </div>
     </div>
   </div>
 

@@ -315,6 +315,11 @@ function renderApplications(apps) {
       remindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:var(--warning); color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Remind</button>`;
     }
 
+    let requestFeeBtn = "";
+    if (payStatus === 'verified') {
+      requestFeeBtn = `<button class="btn-sm js-request-fee-btn" data-id="${app.id}" style="background:#8e44ad; color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Req. Fee</button>`;
+    }
+
     // Table Row
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -324,11 +329,13 @@ function renderApplications(apps) {
       <td>${escapeHtml(app.mobile)}</td>
       <td>${escapeHtml(app.degreeLevel)}</td>
       <td><span class="status ${badgeClass}">${loopDisplayStatus}</span></td>
+      <td><span style="font-weight:bold; color:#555;">${app.payment_type === 'course_fee' ? 'Course Fee' : 'Registration'}</span></td>
       <td><span class="status ${payStatus === 'verified' ? 'accepted' : (payStatus === 'uploaded' ? 'reviewing' : 'rejected')}">${payStatus}</span></td>
       <td>${new Date(app.created_at).toLocaleDateString()}</td>
       <td style="white-space:nowrap;">
         <button class="btn-sm js-view-btn" data-id="${app.id}">View</button>
         ${remindBtn}
+        ${requestFeeBtn}
       </td>
     `;
     tableBody.appendChild(tr);
@@ -340,6 +347,11 @@ function renderApplications(apps) {
     let gridRemindBtn = "";
     if (payStatus !== 'verified' && payStatus !== 'uploaded') {
       gridRemindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:transparent; border:1px solid var(--warning); color:var(--warning); margin-left:10px;">Remind</button>`;
+    }
+
+    let gridRequestFeeBtn = "";
+    if (payStatus === 'verified') {
+      gridRequestFeeBtn = `<button class="btn-sm js-request-fee-btn" data-id="${app.id}" style="background:transparent; border:1px solid #8e44ad; color:#8e44ad; margin-left:10px;">Req. Fee</button>`;
     }
 
     card.innerHTML = `
@@ -373,6 +385,7 @@ function renderApplications(apps) {
        <div class="app-card-footer" style="display:flex; justify-content:flex-end; align-items:center;">
           <button class="btn-primary js-view-btn" data-id="${app.id}" style="flex:1;">View</button>
           ${gridRemindBtn}
+          ${gridRequestFeeBtn}
        </div>
     `;
     gridContainer.appendChild(card);
@@ -426,6 +439,7 @@ async function viewApplication(id) {
       <thead>
         <tr style="background:#f9f9f9; text-align:left; border-bottom:1px solid #ddd;">
            <th style="padding:8px;">Date</th>
+           <th style="padding:8px;">Type</th>
            <th style="padding:8px;">UTR</th>
            <th style="padding:8px;">Status</th>
            <th style="padding:8px;">Proof</th>
@@ -443,6 +457,7 @@ async function viewApplication(id) {
       const token = localStorage.getItem("adminToken");
       html += `<tr>
          <td style="padding:8px; border-bottom:1px solid #eee;">${new Date(p.uploaded_at).toLocaleDateString()}</td>
+         <td style="padding:8px; border-bottom:1px solid #eee;"><strong>${p.payment_type === 'course_fee' ? 'Course Fee' : 'Registration'}</strong></td>
          <td style="padding:8px; border-bottom:1px solid #eee;">${escapeHtml(p.utr)}</td>
          <td style="padding:8px; border-bottom:1px solid #eee;"><span class="status ${badge}">${p.status}</span></td>
          <td style="padding:8px; border-bottom:1px solid #eee;">
@@ -482,6 +497,23 @@ async function viewApplication(id) {
   });
 
   document.getElementById("detailModal").style.display = "block";
+
+  // ACTION BUTTONS VISIBILITY
+  // User Requirement: Hide actions if already accepted. Show if rejected (to allow re-evaluation).
+  const approveBtn = document.getElementById("approveBtn");
+  const reviewBtn = document.getElementById("reviewBtn");
+  const rejectBtn = document.getElementById("rejectBtn");
+
+  if (app.status === 'accepted') {
+    if (approveBtn) approveBtn.style.display = 'none';
+    if (reviewBtn) reviewBtn.style.display = 'none';
+    if (rejectBtn) rejectBtn.style.display = 'none';
+  } else {
+    // Show them for others (submitted, reviewing, pending, rejected)
+    if (approveBtn) approveBtn.style.display = 'inline-block';
+    if (reviewBtn) reviewBtn.style.display = 'inline-block';
+    if (rejectBtn) rejectBtn.style.display = 'inline-block';
+  }
 }
 
 
@@ -554,6 +586,25 @@ window.sendPaymentReminder = async (e, id) => {
   }
 
   if (btn) { btn.innerText = "Remind"; btn.disabled = false; }
+};
+
+window.requestCourseFee = async (e, id) => {
+  if (e) e.stopPropagation();
+  if (!confirm("Send 'Course Fee Payment (30k)' request email to this verified applicant?")) return;
+
+  const btn = e ? e.target : null;
+  if (btn) { btn.innerText = "Sending..."; btn.disabled = true; }
+
+  const res = await fetchWithAuth(`/api/admin/application/${id}/request-course-fee`, { method: "POST" });
+  const data = await res.json();
+
+  if (data.ok) {
+    showToast("Course Fee Request Sent!", "success");
+  } else {
+    showToast("Error: " + (data.error || "Failed to send"), "error");
+  }
+
+  if (btn) { btn.innerText = "Req. Fee"; btn.disabled = false; }
 };
 
 // =====================
@@ -637,6 +688,66 @@ function logout() {
 
 document.getElementById("activateAllBtn")?.addEventListener("click", activatePaymentForAll);
 
+// =====================
+// GROUP MAIL LOGIC
+// =====================
+const groupMailModal = document.getElementById("groupMailModal");
+const openGroupMailBtn = document.getElementById("openGroupMailBtn");
+const closeGroupMailBtn = document.getElementById("closeGroupMailBtn");
+const sendGroupMailBtn = document.getElementById("sendGroupMailBtn");
+
+if (openGroupMailBtn) {
+  openGroupMailBtn.addEventListener("click", () => {
+    groupMailModal.style.display = "block";
+  });
+}
+
+if (closeGroupMailBtn) {
+  closeGroupMailBtn.addEventListener("click", () => {
+    groupMailModal.style.display = "none";
+  });
+}
+
+if (sendGroupMailBtn) {
+  sendGroupMailBtn.addEventListener("click", async () => {
+    const target = document.getElementById("groupMailTarget").value;
+    const subject = document.getElementById("groupMailSubject").value;
+    const message = document.getElementById("groupMailMessage").value;
+
+    if (!subject || !message) {
+      return showToast("Subject and Message are required", "error");
+    }
+
+    if (!confirm(`Are you sure you want to send this email to ${target.toUpperCase()} candidates?`)) return;
+
+    sendGroupMailBtn.innerText = "Sending...";
+    sendGroupMailBtn.disabled = true;
+
+    try {
+      const res = await fetchWithAuth("/api/admin/applications/bulk-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: target, subject, message }) // status maps to target
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        showToast(`Queued ${data.count} emails successfully.`, "success");
+        groupMailModal.style.display = "none";
+        document.getElementById("groupMailSubject").value = "";
+        document.getElementById("groupMailMessage").value = "";
+      } else {
+        showToast("Error: " + data.error, "error");
+      }
+    } catch (e) {
+      showToast("Network Error", "error");
+    } finally {
+      sendGroupMailBtn.innerText = "Send Broadcast";
+      sendGroupMailBtn.disabled = false;
+    }
+  });
+}
+
 
 /* =====================================================
    GLOBAL EVENT DELEGATION (CSP COMPLIANT)
@@ -655,6 +766,14 @@ document.addEventListener('click', async (e) => {
   if (remindBtn) {
     const id = remindBtn.dataset.id;
     if (id) await sendPaymentReminder(e, id);
+    return;
+  }
+
+  // 2b. Request Course Fee
+  const reqFeeBtn = e.target.closest('.js-request-fee-btn');
+  if (reqFeeBtn) {
+    const id = reqFeeBtn.dataset.id;
+    if (id) await window.requestCourseFee(e, id);
     return;
   }
 

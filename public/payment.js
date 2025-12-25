@@ -73,6 +73,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const fd = new FormData(form);
 
+    // FormData captures all form fields automatically, including payment_type if present.
+    // No need to append manually.
+
     if (!fd.get("amount")) fd.set("amount", "1000");
 
     console.log("📤 Uploading payment:", Object.fromEntries(fd.entries()));

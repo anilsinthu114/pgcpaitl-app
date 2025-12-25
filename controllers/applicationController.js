@@ -77,7 +77,7 @@ exports.createDraft = async (req, res) => {
 
             // status & flow
             "pending",
-            "draft",
+            "payment_pending",
             0
         ];
 
@@ -246,6 +246,7 @@ exports.listApplications = async (_, res) => {
     SELECT a.*, 
            (SELECT status FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_status,
            (SELECT utr FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_utr,
+           (SELECT payment_type FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_type,
            (SELECT updated_at FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_updated_at
     FROM applications a
     ORDER BY a.created_at DESC
@@ -333,6 +334,104 @@ exports.sendPaymentReminder = async (req, res) => {
         }
     } catch (err) {
         error("Reminder error", err);
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
+// Admin: Request Course Fee (30k)
+exports.requestCourseFee = async (req, res) => {
+    const id = Number(req.params.id);
+    debug("Requesting course fee", { id });
+
+    try {
+        const [rows] = await pool.query(`
+            SELECT a.*, 
+                   (SELECT status FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_status
+            FROM applications a WHERE id=?`, [id]
+        );
+
+        if (!rows.length) return res.status(404).json({ ok: false, error: "Application not found" });
+        const appObj = rows[0];
+
+        // Security: Ensure application fee is verified first
+        if (appObj.payment_status !== 'verified') {
+            return res.status(400).json({ ok: false, error: "Application fee not verified yet." });
+        }
+
+        try {
+            Mailer.sendMail(
+                appObj.email,
+                `Action Required: Course Fee Payment Request - ID ${prettyId(id)}`,
+                Mailer.courseFeeRequestEmail(appObj, prettyId(id))
+            );
+            res.json({ ok: true, message: `Course fee request sent to ${appObj.email}` });
+        } catch (e) {
+            errorLogger.error("Course fee mail error", e);
+            res.status(500).json({ ok: false, error: "Failed to send email" });
+        }
+    } catch (err) {
+        error("Course fee request error", err);
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
+// Admin: Send Bulk Mail (Group Mail)
+exports.sendBulkMail = async (req, res) => {
+    const { status, subject, message } = req.body;
+    debug("Bulk mail request", { status, subject });
+
+    if (!message || !subject) return res.status(400).json({ ok: false, error: "Subject and Message are required" });
+
+    try {
+        let query = "SELECT email, fullName FROM applications";
+        const params = [];
+
+        // status 'all' means everyone, otherwise filter
+        if (status && status !== 'all') {
+            query += " WHERE status=?";
+            params.push(status);
+        }
+
+        const [recipients] = await pool.query(query, params);
+
+        if (recipients.length === 0) {
+            return res.json({ ok: true, count: 0, message: "No recipients found for this status." });
+        }
+
+        info(`Sending bulk mail to ${recipients.length} recipients`);
+
+        // Send in background to avoid timeout
+        let count = 0;
+        // Simple loop (in production, use a queue)
+        (async () => {
+            for (const r of recipients) {
+                try {
+                    // personalized greeting if possible, or generic
+                    const personalizedHtml = Mailer.layout(`
+                        <h2 style="color:#003c7a;">Official Notification</h2>
+                        <p>Dear <strong>${r.fullName || 'Applicant'}</strong>,</p>
+                        <div style="font-size:14px; line-height:1.6; color:#333;">
+                            ${message}
+                        </div>
+                        <p style="margin-top:20px;">
+                            Regards,<br/>
+                            <strong>PGCPAITL Admissions Team</strong>
+                        </p>
+                    `);
+
+                    await Mailer.sendMail(r.email, subject, personalizedHtml);
+                    count++;
+                } catch (e) {
+                    errorLogger.error(`Bulk mail failed for ${r.email}`, e);
+                }
+            }
+            info(`Bulk mail finished. Sent: ${count}/${recipients.length}`);
+        })();
+
+        res.json({ ok: true, count: recipients.length, message: `Sending to ${recipients.length} applicants in background.` });
+
+    } catch (err) {
+        error("Bulk mail error", err);
         res.status(500).json({ ok: false, error: err.message });
     }
 };
