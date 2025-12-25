@@ -1,0 +1,343 @@
+// =====================
+// AUTH CHECK
+// =====================
+const token = localStorage.getItem("adminToken");
+if (!token) {
+  window.location.href = "/admin/login.html";
+}
+
+// helper
+async function fetchWithAuth(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    cache: "no-store",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      ...options.headers
+    }
+  });
+}
+
+// =====================
+// ON PAGE READY
+// =====================
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Logout button (CSP-safe)
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.addEventListener("click", logout);
+
+  // Modal action buttons (CSP-safe)
+  const approveBtn = document.getElementById("approveBtn");
+  const reviewBtn = document.getElementById("reviewBtn");
+  const rejectBtn = document.getElementById("rejectBtn");
+  const closeBtn = document.getElementById("closeModalBtn");
+
+  approveBtn?.addEventListener("click", () => updateStatus("accepted"));
+  reviewBtn?.addEventListener("click", () => updateStatus("reviewing"));
+  rejectBtn?.addEventListener("click", () => updateStatus("rejected"));
+  closeBtn?.addEventListener("click", closeModal);
+
+  // View Toggle Logic
+  const tableBtn = document.getElementById("viewTableBtn");
+  const gridBtn = document.getElementById("viewGridBtn");
+  const tableContainer = document.getElementById("appsTableContainer");
+  const gridContainer = document.getElementById("appsGrid");
+
+  if (tableBtn && gridBtn) {
+    tableBtn.addEventListener("click", () => {
+      tableBtn.classList.add("active");
+      tableBtn.style.background = "#003366"; tableBtn.style.color = "white"; // Force active style
+      gridBtn.classList.remove("active");
+      gridBtn.style.background = "white"; gridBtn.style.color = "#333";
+
+      tableContainer.style.display = "block";
+      gridContainer.style.display = "none";
+    });
+
+    gridBtn.addEventListener("click", () => {
+      gridBtn.classList.add("active");
+      gridBtn.style.background = "#003366"; gridBtn.style.color = "white";
+      tableBtn.classList.remove("active");
+      tableBtn.style.background = "white"; tableBtn.style.color = "#333";
+
+      tableContainer.style.display = "none";
+      gridContainer.style.display = "grid";
+    });
+
+    // Default to Grid on Mobile
+    if (window.innerWidth <= 768) {
+      gridBtn.click();
+    }
+  }
+
+  // Filter Logic
+  const filterSelect = document.getElementById("statusFilter");
+  if (filterSelect) {
+    filterSelect.addEventListener("change", (e) => {
+      applyFilter(e.target.value);
+    });
+  }
+
+  // Export Logic
+  const exportBtn = document.getElementById("exportBtn");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportData);
+  }
+
+  // Expose functions to global scope for inline onclick handlers
+  window.viewApplication = viewApplication;
+  window.loadApplications = loadApplications;
+
+  loadApplications();
+});
+
+// Global Data
+window.allApps = [];
+window.currentFilteredApps = [];
+
+// =====================
+// LOAD APPLICATIONS
+// =====================
+async function loadApplications() {
+  const res = await fetchWithAuth("/api/admin/applications");
+  const data = await res.json();
+
+  if (!data.ok) {
+    document.getElementById("loading").innerText = "Failed to load data.";
+    return;
+  }
+
+  window.allApps = data.items;
+  window.currentFilteredApps = data.items;
+  
+  document.getElementById("loading").style.display = "none";
+
+  renderApplications(window.allApps);
+  updateStats(window.allApps);
+}
+
+function applyFilter(status) {
+  if (status === 'all') {
+    window.currentFilteredApps = window.allApps;
+  } else {
+    // Logic specific filtering
+    window.currentFilteredApps = window.allApps.filter(app => {
+       const payStatus = app.payment_status || "Pending";
+       
+       if (status === 'accepted') return app.status === 'accepted';
+       if (status === 'rejected') return app.status === 'rejected';
+       if (status === 'reviewing') return payStatus === 'uploaded' && app.status !== 'accepted' && app.status !== 'rejected';
+       if (status === 'payment_pending') return payStatus !== 'verified' && payStatus !== 'uploaded';
+       if (status === 'submitted') return app.status === 'submitted' && payStatus === 'verified'; 
+       
+       return true;
+    });
+  }
+  renderApplications(window.currentFilteredApps);
+}
+
+function updateStats(apps) {
+  // Stats are always based on ALL apps, not filtered view, usually.
+  // Unless user wants stats of filtered view. 
+  // Standard dashboard behavior: Stats cards show Total counts.
+  
+  const total = apps.length;
+
+  const submitted = apps.filter(a => a.status === "submitted" && a.payment_status === "verified").length;
+  const pending = apps.filter(a =>
+    a.status === "payment_pending" ||
+    (a.status === "submitted" && a.payment_status !== "verified")
+  ).length;
+  const reviewing = apps.filter(a =>
+    a.payment_status === "uploaded" &&
+    a.status !== "accepted" &&
+    a.status !== "rejected"
+  ).length;
+  const accepted = apps.filter(a => a.status === "accepted").length;
+  const rejected = apps.filter(a => a.status === "rejected").length;
+
+  document.getElementById("totalApps").innerText = total;
+  document.getElementById("submittedApps").innerText = submitted;
+  document.getElementById("pendingApps").innerText = pending;
+  document.getElementById("reviewingApps").innerText = reviewing;
+  document.getElementById("acceptedApps").innerText = accepted;
+  document.getElementById("rejectedApps").innerText = rejected;
+}
+
+function renderApplications(apps) {
+  const tableBody = document.getElementById("appsBody");
+  const gridContainer = document.getElementById("appsGrid");
+  
+  tableBody.innerHTML = "";
+  gridContainer.innerHTML = "";
+
+  if(apps.length === 0) {
+      gridContainer.innerHTML = "<p style='padding:20px; color:#666;'>No applications found.</p>";
+      return;
+  }
+
+  apps.forEach(app => {
+    const payStatus = app.payment_status || "Pending";
+
+    // CORE LOGIC FOR UI STATUS (Prioritized)
+    let loopDisplayStatus = app.status;
+    let badgeClass = app.status;
+
+    // 1. FINAL STATES override everything
+    if (app.status === 'accepted') {
+      loopDisplayStatus = 'Accepted';
+      badgeClass = 'accepted';
+    } else if (app.status === 'rejected') {
+      loopDisplayStatus = 'Rejected';
+      badgeClass = 'rejected';
+    }
+    // 2. PAYMENT ISSUES
+    else if (payStatus === 'rejected') {
+      loopDisplayStatus = 'Payment Rejected';
+      badgeClass = 'rejected';
+    }
+    // 3. PAYMENT PENDING
+    else if (payStatus !== 'verified' && payStatus !== 'uploaded') {
+      loopDisplayStatus = 'Pay Pending';
+      badgeClass = 'payment_pending';
+    }
+    // 4. PAYMENT UPLOADED (Under Review)
+    else if (payStatus === 'uploaded') {
+      loopDisplayStatus = 'Under Review';
+      badgeClass = 'reviewing';
+    }
+    // 5. PAYMENT VERIFIED (Ready for final decision)
+    else if (payStatus === 'verified') {
+      loopDisplayStatus = 'Verified';
+      badgeClass = 'submitted';
+    }
+
+    let remindBtn = "";
+    if (payStatus !== 'verified' && payStatus !== 'uploaded') {
+      remindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:var(--warning); color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Remind</button>`;
+    }
+
+    // TABLE ROW
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${app.id}</td>
+      <td><span style="font-weight:600;">${escapeHtml(app.fullName)}</span></td>
+      <td>${escapeHtml(app.email)}</td>
+      <td>${escapeHtml(app.mobile)}</td>
+      <td>${escapeHtml(app.degreeLevel)}</td>
+      <td><span class="status ${badgeClass}">${loopDisplayStatus}</span></td>
+      <td><span class="status ${payStatus === 'verified' ? 'accepted' : (payStatus === 'uploaded' ? 'reviewing' : 'rejected')}">${payStatus}</span></td>
+      <td>${new Date(app.created_at).toLocaleDateString()}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn-sm js-view-btn" data-id="${app.id}">View</button>
+        ${remindBtn}
+      </td>
+    `;
+    tableBody.appendChild(tr);
+
+    // GRID ITEM
+    const card = document.createElement("div");
+    card.className = "app-card";
+
+    let gridRemindBtn = "";
+    if (payStatus !== 'verified' && payStatus !== 'uploaded') {
+      gridRemindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:transparent; border:1px solid var(--warning); color:var(--warning); margin-left:10px;">Remind</button>`;
+    }
+
+    card.innerHTML = `
+       <div class="app-card-header">
+         <div style="display:flex; justify-content:space-between; width:100%;">
+            <span style="font-size:0.8rem; color:#999;">#${app.id}</span>
+            <span class="status ${badgeClass}" style="font-size:0.7rem;">${loopDisplayStatus}</span>
+         </div>
+         <h4 style="margin-top:5px;">${escapeHtml(app.fullName)}</h4>
+       </div>
+       
+       <div class="app-card-row">
+         <span class="app-card-label">Email</span>
+         <span>${escapeHtml(app.email)}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Mobile</span>
+         <span>${escapeHtml(app.mobile)}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Degree</span>
+         <span>${escapeHtml(app.degreeLevel)}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Payment</span>
+         <span class="status ${payStatus === 'verified' ? 'accepted' : (payStatus === 'uploaded' ? 'reviewing' : 'rejected')}" style="padding:2px 8px; font-size:0.7rem;">${payStatus}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Applied</span>
+         <span>${new Date(app.submitted_at || app.created_at).toLocaleDateString()}</span>
+       </div>
+
+       <div class="app-card-footer" style="display:flex; justify-content:flex-end; align-items:center;">
+          <button class="btn-primary js-view-btn" data-id="${app.id}" style="flex:1;">View</button>
+          ${gridRemindBtn}
+       </div>
+    `;
+    gridContainer.appendChild(card);
+  });
+}
+
+// =====================
+// EXPORT TO EXCEL (CSV)
+// =====================
+function exportData() {
+  const apps = window.currentFilteredApps || [];
+  if (apps.length === 0) {
+    showToast("No data to export", "info");
+    return;
+  }
+
+  // Define Headers
+  const headers = [
+    "ID", "Full Name", "Email", "Mobile", "Gender", "Category", 
+    "Degree Level", "Specialization", "Percentage", "Payment Status", 
+    "UTR", "Application Status", "Applied Date"
+  ];
+
+  // Convert to CSV
+  const csvRows = [];
+  csvRows.push(headers.join(","));
+
+  apps.forEach(app => {
+    const row = [
+      app.id,
+      escapeCsv(app.fullName),
+      escapeCsv(app.email),
+      escapeCsv(app.mobile),
+      escapeCsv(app.gender),
+      escapeCsv(app.category),
+      escapeCsv(app.degreeLevel),
+      escapeCsv(app.specialization),
+      escapeCsv(app.percentage),
+      app.payment_status || "Pending",
+      escapeCsv(app.payment_utr),
+      app.status,
+      new Date(app.created_at).toLocaleDateString()
+    ];
+    csvRows.push(row.join(","));
+  });
+
+  const csvString = csvRows.join("\n");
+  const blob = new Blob([csvString], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `applications_export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+  showToast("Export downloaded!", "success");
+}
+
+function escapeCsv(str) {
+  if (!str) return "";
+  const s = String(str).replace(/"/g, '""'); // Escape double quotes
+  return `"${s}"`; // Wrap in quotes
+}

@@ -1,0 +1,96 @@
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f7fb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .card {
+        max-width: 520px;
+        background: #fff;
+        padding: 24px 22px 26px;
+        width: 90%;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        text-align: center;
+    }
+
+    h1 {
+        margin: 0 0 6px;
+        color: #003c7a;
+        font-size: 1.3rem;
+    }
+
+    p {
+        margin: 4px 0;
+        font-size: 0.95rem;
+        color: #444;
+        line-height: 1.5;
+    }
+
+    .highlight {
+        font-weight: 600;
+        color: #003c7a;
+    }
+
+    /* Thank You Page Box */
+    .pay-box {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px dashed #f0a500;
+        background: #fffaf0;
+        font-size: 0.9rem;
+        text-align: left;
+    }
+
+    /* Success Page Boxes */
+    .verify-box {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 10px;
+        background: #eefbf1;
+        border-left: 4px solid #1f8b4c;
+        text-align: left;
+        font-size: 0.92rem;
+    }
+
+    .next-box {
+        margin-top: 18px;
+        padding: 14px;
+        border-radius: 10px;
+        background: #fffaf0;
+        border-left: 4px solid #f0a500;
+        text-align: left;
+        font-size: 0.92rem;
+    }
+
+    .note {
+        margin-top: 14px;
+        font-size: 0.85rem;
+        color: #777;
+    }
+
+    /* Button Styles */
+    .btn-pay,
+    .btn-dashboard {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 10px 22px;
+        background: #003c7a;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 999px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: none;
+        transition: background 0.2s;
+    }
+
+    .btn-pay:hover,
+    .btn-dashboard:hover {
+        background: #002f5f;
+    }

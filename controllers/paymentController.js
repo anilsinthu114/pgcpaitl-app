@@ -152,7 +152,7 @@ exports.rejectPayment = async (req, res) => {
         const appId = payment.application_id;
 
         await pool.query("UPDATE application_payments SET status='rejected' WHERE id=?", [id]);
-        await pool.query("UPDATE applications SET status='payment_pending' WHERE id=?", [appId]);
+        await pool.query("UPDATE applications SET status='pending' WHERE id=?", [appId]);
 
         const [apps] = await pool.query("SELECT email, fullName FROM applications WHERE id=?", [appId]);
         if (apps.length > 0) {

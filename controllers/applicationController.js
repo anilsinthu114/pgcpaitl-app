@@ -76,7 +76,7 @@ exports.createDraft = async (req, res) => {
             JSON.stringify(req.body.declarations || []),
 
             // status & flow
-            "payment_pending",
+            "pending",
             "draft",
             0
         ];
@@ -162,8 +162,8 @@ exports.submitApplication = async (req, res) => {
 
         if (!isPaid) {
             warn("Submission attempted without verified payment", { id });
-            newStatus = 'payment_pending';
-            flowState = 'payment_pending';
+            newStatus = 'pending';
+            flowState = 'pending';
         }
 
         // 2. Update Application Status
@@ -213,7 +213,7 @@ exports.submitApplication = async (req, res) => {
 
             return res.json({
                 ok: true,
-                warning: "payment_pending",
+                warning: "pending",
                 message: "Application submitted but awaiting payment verification."
             });
         }
@@ -233,35 +233,47 @@ exports.submitApplication = async (req, res) => {
 exports.listApplications = async (_, res) => {
     debug("Fetching admin applications");
 
-    // AUTO-FIX
-    await pool.query(`
+    try {
+        // AUTO-FIX
+        await pool.query(`
     UPDATE application_payments 
     SET status = 'uploaded' 
     WHERE (utr IS NOT NULL AND utr != '') 
     AND (status = 'pending' OR status IS NULL)
   `);
 
-    const [rows] = await pool.query(`
+        const [rows] = await pool.query(`
     SELECT a.*, 
            (SELECT status FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_status,
-           (SELECT utr FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_utr
+           (SELECT utr FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_utr,
+           (SELECT updated_at FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_updated_at
     FROM applications a
     ORDER BY a.created_at DESC
   `);
-    res.json({ ok: true, items: rows });
+        res.json({ ok: true, items: rows });
+    } catch (err) {
+        error("Error listing applications", err);
+        res.status(500).json({ ok: false, error: "Database error" });
+    }
 };
 
 // Admin: Get Application Details
 exports.getApplicationDetails = async (req, res) => {
     const id = req.params.id;
     debug("Fetching application details", { id });
-    const [rows] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
-    if (!rows.length) return res.status(404).json({ ok: false });
 
-    const [files] = await pool.query("SELECT * FROM application_files WHERE application_id=?", [id]);
-    const [payments] = await pool.query("SELECT * FROM application_payments WHERE application_id=? ORDER BY uploaded_at DESC", [id]);
+    try {
+        const [rows] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
+        if (!rows.length) return res.status(404).json({ ok: false });
 
-    res.json({ ok: true, application: rows[0], files, payments });
+        const [files] = await pool.query("SELECT * FROM application_files WHERE application_id=?", [id]);
+        const [payments] = await pool.query("SELECT * FROM application_payments WHERE application_id=? ORDER BY uploaded_at DESC", [id]);
+
+        res.json({ ok: true, application: rows[0], files, payments });
+    } catch (err) {
+        error("Error fetching details", err);
+        res.status(500).json({ ok: false, error: "Database error" });
+    }
 };
 
 // Admin: Update Status
@@ -328,23 +340,23 @@ exports.sendPaymentReminder = async (req, res) => {
 // Admin: Download File
 exports.downloadFile = async (req, res) => {
     const id = Number(req.params.id);
-    const [files] = await pool.query("SELECT * FROM application_files WHERE id=?", [id]);
-    if (files.length === 0) return res.status(404).send("File not found");
-
-    const f = files[0];
-    // Assuming root dir is roughly where server.js is
-    // When using path.join(__dirname), inside controller it is different.
-    // The stored path in DB might be relative to project root or absolute.
-    // server.js logic: path.join(__dirname, f.stored_path)
-    // If f.stored_path is "uploads/...", server.js (root) works.
-    // Here we are in controllers/. We need to go up one level.
-    const projectRoot = path.resolve(__dirname, '..');
-    const absPath = path.isAbsolute(f.stored_path) ? f.stored_path : path.join(projectRoot, f.stored_path);
 
     try {
-        await fs.access(absPath);
-        res.download(absPath, f.original_name);
-    } catch {
-        res.status(404).send("File missing on disk");
+        const [files] = await pool.query("SELECT * FROM application_files WHERE id=?", [id]);
+        if (files.length === 0) return res.status(404).send("File not found");
+
+        const f = files[0];
+        const projectRoot = path.resolve(__dirname, '..');
+        const absPath = path.isAbsolute(f.stored_path) ? f.stored_path : path.join(projectRoot, f.stored_path);
+
+        try {
+            await fs.access(absPath);
+            res.download(absPath, f.original_name);
+        } catch {
+            res.status(404).send("File missing on disk");
+        }
+    } catch (err) {
+        error("Download error", err);
+        res.status(500).send("Server Error");
     }
 };

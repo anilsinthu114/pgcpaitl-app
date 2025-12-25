@@ -10,6 +10,7 @@ if (!token) {
 async function fetchWithAuth(url, options = {}) {
   return fetch(url, {
     ...options,
+    cache: "no-store",
     headers: {
       "Authorization": `Bearer ${token}`,
       ...options.headers
@@ -63,6 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
       tableContainer.style.display = "none";
       gridContainer.style.display = "grid";
     });
+
+    // Default to Grid on Mobile
+    if (window.innerWidth <= 768) {
+      gridBtn.click();
+    }
   }
 
   // Expose functions to global scope for inline onclick handlers
@@ -71,6 +77,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadApplications();
 });
+
+// =====================
+// GLOBAL DATA STORE
+// =====================
+window.allApps = []; // Store for client-side filtering
 
 // =====================
 // LOAD APPLICATIONS
@@ -84,18 +95,152 @@ async function loadApplications() {
     return;
   }
 
-  const apps = data.items;
-  const tableBody = document.getElementById("appsBody");
-  const gridContainer = document.getElementById("appsGrid");
-  const table = document.getElementById("appsTable");
+  // Store globally
+  window.allApps = data.items;
 
   document.getElementById("loading").style.display = "none";
-  // table.style.display = "table"; // Controlled by toggle now
 
+  // Initial Render (All)
+  window.filteredApps = window.allApps; // Init filtered list
+  renderApplications(window.allApps);
+  updateStats(window.allApps);
+}
 
-  // =====================
-  // REALISTIC STATS CALCULATION
-  // =====================
+// =====================
+// FILTERS & EXPORT LOGIC
+// =====================
+document.addEventListener("DOMContentLoaded", () => {
+  const filterStatus = document.getElementById("filterStatus");
+  const filterPayment = document.getElementById("filterPayment");
+  const exportBtn = document.getElementById("exportBtn");
+
+  if (filterStatus) filterStatus.addEventListener("change", applyFilters);
+  if (filterPayment) filterPayment.addEventListener("change", applyFilters);
+  if (exportBtn) exportBtn.addEventListener("click", exportToExcel);
+});
+
+function applyFilters() {
+  const statusEl = document.getElementById("filterStatus");
+  const paymentEl = document.getElementById("filterPayment");
+
+  if (!statusEl || !paymentEl) return;
+
+  const sVal = statusEl.value; // "all", "submitted", "accepted", "rejected", "reviewing"
+  const pVal = paymentEl.value; // "all", "verified", "uploaded", "pending", "rejected"
+
+  // Filter Logic
+  window.filteredApps = window.allApps.filter(app => {
+    // 1. App Status Check
+    let sMatch = (sVal === "all");
+    if (!sMatch) {
+      if (sVal === "submitted" && app.status === "submitted") sMatch = true;
+      else if (sVal === "accepted" && app.status === "accepted") sMatch = true;
+      else if (sVal === "rejected" && app.status === "rejected") sMatch = true;
+      else if (sVal === "reviewing") {
+        // "Under Review" effectively means payment uploaded but not final status
+        if (app.payment_status === 'uploaded' && app.status !== 'accepted' && app.status !== 'rejected') sMatch = true;
+        // OR literal 'reviewing' status if used
+        if (app.status === 'reviewing') sMatch = true;
+      }
+    }
+
+    // 2. Payment Status Check
+    let pMatch = (pVal === "all");
+    if (!pMatch) {
+      const payStatus = app.payment_status || "pending";
+      if (pVal === "verified" && payStatus === "verified") pMatch = true;
+      else if (pVal === "uploaded" && payStatus === "uploaded") pMatch = true;
+      else if (pVal === "rejected" && payStatus === "rejected") pMatch = true;
+      else if (pVal === "pending") {
+        if (payStatus !== "verified" && payStatus !== "uploaded" && payStatus !== "rejected") pMatch = true;
+      }
+    }
+
+    return sMatch && pMatch;
+  });
+
+  // Re-render
+  renderApplications(window.filteredApps);
+}
+
+function exportToExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert("System Update: The export library is blocked. Please RESTART the Node.js server terminal to apply the latest security updates.");
+    return;
+  }
+
+  if (!window.filteredApps || window.filteredApps.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  // Flatten data for Excel
+  const data = window.filteredApps.map(app => ({
+    "App ID": app.id,
+    "Full Name": app.fullName || "",
+    "Parent Name": app.parentName || "",
+    "Email": app.email || "",
+    "Mobile": app.mobile || "",
+    "WhatsApp": app.whatsapp || "",
+    "DOB": app.dob || "",
+    "Gender": app.gender || "",
+    "Category": app.category || "",
+    "Nationality": app.nationality || "",
+    "Aadhaar": app.aadhaar || "",
+
+    // Address
+    "Address": app.address || "",
+    "City": app.city || "",
+    "District": app.district || "",
+    "State": app.state || "",
+    "Pin Code": app.pin || "",
+    "Country": app.country || "",
+
+    // Academic
+    "Degree Level": app.degreeLevel || "",
+    "Specialization": app.specialization || "",
+    "Institute Name": app.institutionName || "",
+    "University": app.university || "",
+    "Passing Year": app.passingYear || "",
+    "Study Mode": app.studyMode || "",
+    "Percentage": app.percentage || "",
+
+    // Employment
+    "Employment Status": app.employmentStatus || "",
+    "Organisation": app.organisation || "",
+    "Designation": app.designation || "",
+    "Sector": app.sector || "",
+    "Experience": app.experience || "",
+
+    // Application Status
+    "App Status": app.status || "",
+    "Payment Status": app.payment_status || "Pending",
+    "UTR Number": app.payment_utr || app.utr || "", // specific fix for UTR
+
+    // Dates
+    "Submitted At": app.submitted_at ? new Date(app.submitted_at).toLocaleString() : "",
+    "Created At": app.created_at ? new Date(app.created_at).toLocaleString() : "",
+    "Payment Date": app.payment_updated_at ? new Date(app.payment_updated_at).toLocaleString() : "",
+
+    // Misc
+    "SOP": app.sop || "",
+    "Declarations": app.declarations || ""
+  }));
+
+  // Create Workbook
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Applications");
+
+  // Generate Filename
+  const date = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `PGCPAITL_Full_Export_${date}.xlsx`);
+}
+
+// =====================
+// UPDATE STATS
+// =====================
+function updateStats(apps) {
   const total = apps.length;
 
   // 1. Submitted & Verified: Status IS submitted AND Payment Verified
@@ -127,79 +272,108 @@ async function loadApplications() {
   document.getElementById("reviewingApps").innerText = reviewing;
   document.getElementById("acceptedApps").innerText = accepted;
   document.getElementById("rejectedApps").innerText = rejected;
+}
 
+// =====================
+// RENDER APPLICATIONS (Filtered)
+// =====================
+function renderApplications(apps) {
+  const tableBody = document.getElementById("appsBody");
+  const gridContainer = document.getElementById("appsGrid");
 
   tableBody.innerHTML = "";
   gridContainer.innerHTML = "";
 
   apps.forEach(app => {
     const payStatus = app.payment_status || "Pending";
-
-    // CORE LOGIC FOR UI STATUS
     let loopDisplayStatus = app.status;
     let badgeClass = app.status;
 
     // Override Logic for UI Clarity & Consistency
-
-    // 0. If Payment Rejected -> Show "Payment Rejected"
-    if (payStatus === 'rejected') {
+    if (app.status === 'accepted') {
+      loopDisplayStatus = 'Accepted';
+      badgeClass = 'accepted';
+    } else if (app.status === 'rejected') {
+      loopDisplayStatus = 'Rejected';
+      badgeClass = 'rejected';
+    } else if (payStatus === 'rejected') {
       loopDisplayStatus = 'Payment Rejected';
       badgeClass = 'rejected';
-    }
-    // 1. If Payment is Pending (and not rejected) -> Show "Pay Pending"
-    else if (payStatus !== 'verified' && payStatus !== 'uploaded') {
+    } else if (payStatus !== 'verified' && payStatus !== 'uploaded') {
       loopDisplayStatus = 'Pay Pending';
       badgeClass = 'payment_pending';
-    }
-    // 2. If Payment Uploaded -> Under Review (unless already decided)
-    else if (payStatus === 'uploaded' && app.status !== 'accepted' && app.status !== 'rejected') {
+    } else if (payStatus === 'uploaded') {
       loopDisplayStatus = 'Under Review';
       badgeClass = 'reviewing';
-    }
-    // 3. If Payment Verified AND Status is Submitted -> Verified
-    else if (app.status === 'submitted' && payStatus === 'verified') {
+    } else if (payStatus === 'verified') {
       loopDisplayStatus = 'Verified';
       badgeClass = 'submitted';
     }
 
     let remindBtn = "";
-
-
     if (payStatus !== 'verified' && payStatus !== 'uploaded') {
-      remindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:#f39c12; color:white; border:none; padding:2px 6px; font-size:11px; margin-left:5px;">Remind</button>`;
+      remindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:var(--warning); color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Remind</button>`;
     }
 
+    // Table Row
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${app.id}</td>
-      <td>${escapeHtml(app.fullName)}</td>
+      <td><span style="font-weight:600;">${escapeHtml(app.fullName)}</span></td>
       <td>${escapeHtml(app.email)}</td>
       <td>${escapeHtml(app.mobile)}</td>
       <td>${escapeHtml(app.degreeLevel)}</td>
       <td><span class="status ${badgeClass}">${loopDisplayStatus}</span></td>
       <td><span class="status ${payStatus === 'verified' ? 'accepted' : (payStatus === 'uploaded' ? 'reviewing' : 'rejected')}">${payStatus}</span></td>
       <td>${new Date(app.created_at).toLocaleDateString()}</td>
-      <td>
-        <button class="btn-sm js-view-btn" data-id="${app.id}" style="background:var(--primary); color:white; border:none; padding:5px 10px;">View</button>
+      <td style="white-space:nowrap;">
+        <button class="btn-sm js-view-btn" data-id="${app.id}">View</button>
         ${remindBtn}
       </td>
     `;
     tableBody.appendChild(tr);
 
-    // Grid Item
+    // Grid Card
     const card = document.createElement("div");
     card.className = "app-card";
+
+    let gridRemindBtn = "";
+    if (payStatus !== 'verified' && payStatus !== 'uploaded') {
+      gridRemindBtn = `<button class="btn-sm js-remind-btn" data-id="${app.id}" style="background:transparent; border:1px solid var(--warning); color:var(--warning); margin-left:10px;">Remind</button>`;
+    }
+
     card.innerHTML = `
-       <div class="card-header" style="border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-         <h4 style="margin:0; color:var(--primary);">${escapeHtml(app.fullName)}</h4>
-         <span class="status ${badgeClass}" style="font-size:10px;">${loopDisplayStatus}</span>
+       <div class="app-card-header">
+         <div style="display:flex; justify-content:space-between; width:100%;">
+            <span style="font-size:0.8rem; color:#999;">#${app.id}</span>
+            <span class="status ${badgeClass}" style="font-size:0.7rem;">${loopDisplayStatus}</span>
+         </div>
+         <h4 style="margin-top:5px;">${escapeHtml(app.fullName)}</h4>
        </div>
-       <div style="font-size:13px; color:#666;">
-         <p style="margin:4px 0;"><b>Email:</b> ${escapeHtml(app.email)}</p>
-         <p style="margin:4px 0;"><b>Payment:</b> ${payStatus}</p>
-         <p style="margin:4px 0;"><b>Applied:</b> ${new Date(app.submitted_at).toLocaleDateString()}</p>
+       <div class="app-card-row">
+         <span class="app-card-label">Email</span>
+         <span>${escapeHtml(app.email)}</span>
        </div>
-       <button class="btn-primary js-view-btn" data-id="${app.id}" style="width:100%; margin-top:10px; background:var(--primary);">View Details</button>
+       <div class="app-card-row">
+         <span class="app-card-label">Mobile</span>
+         <span>${escapeHtml(app.mobile)}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Degree</span>
+         <span>${escapeHtml(app.degreeLevel)}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Payment</span>
+         <span class="status ${payStatus === 'verified' ? 'accepted' : (payStatus === 'uploaded' ? 'reviewing' : 'rejected')}" style="padding:2px 8px; font-size:0.7rem;">${payStatus}</span>
+       </div>
+       <div class="app-card-row">
+         <span class="app-card-label">Applied</span>
+         <span>${new Date(app.submitted_at || app.created_at).toLocaleDateString()}</span>
+       </div>
+       <div class="app-card-footer" style="display:flex; justify-content:flex-end; align-items:center;">
+          <button class="btn-primary js-view-btn" data-id="${app.id}" style="flex:1;">View</button>
+          ${gridRemindBtn}
+       </div>
     `;
     gridContainer.appendChild(card);
   });

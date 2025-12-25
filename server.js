@@ -28,7 +28,23 @@ fsSync.mkdirSync(FILE_BASE, { recursive: true });
 
 /* ================= APP ================= */
 const app = express();
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.sheetjs.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"],
+    },
+  },
+}));
+
+// Simple Request Logger
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.url}`);
+  next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimit({ windowMs: 60 * 1000, max: 120 }));
@@ -46,9 +62,26 @@ app.use("/", paymentRoutes);
 
 
 /* ================= START ================= */
+// Safe Error Handling
+app.use((err, req, res, next) => {
+  console.error("!!! GLOBAL ERROR !!!", err);
+  res.status(500).json({ ok: false, error: "Internal Server Error" });
+});
+
+/* ================= START ================= */
 // Ensure default admin exists
 authController.ensureDefaultAdmin();
 
-app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, () => {
   console.log(`SERVER RUNNING → http://${HOST}:${PORT}`);
+});
+
+// Crash Handling
+process.on("uncaughtException", (err) => {
+  console.error("!!! UNCAUGHT EXCEPTION !!!", err);
+  // Ideally, close server, but for now keep alive or log well
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("!!! UNHANDLED REJECTION !!!", reason);
 });

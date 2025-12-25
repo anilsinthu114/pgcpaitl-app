@@ -19,6 +19,16 @@
             "date": 1766298308191,
             "name": "E:\\Anil\\pgcpaitl-app\\logs\\error-2025-12-21.log",
             "hash": "950e933872e08a152df3319a825705a144aeed7daee48dc857df6f5b61ba1f24"
+        },
+        {
+            "date": 1766375441053,
+            "name": "E:\\Anil\\pgcpaitl-app\\logs\\error-2025-12-22.log",
+            "hash": "fce78313d278ebd028ca1d7293b09bd417bf8a58a77661713c1f20443f5699ff"
+        },
+        {
+            "date": 1766654508571,
+            "name": "E:\\Anil\\pgcpaitl-app\\logs\\error-2025-12-25.log",
+            "hash": "d67d7271fde000247f132e27ebbd758f04fc00ebf1656e4ebb014bd8c5fe0fa0"
         }
     ],
     "hashType": "sha256"

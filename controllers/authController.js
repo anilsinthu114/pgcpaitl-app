@@ -38,7 +38,7 @@ exports.ensureDefaultAdmin = async () => {
         const [rows] = await pool.query("SELECT COUNT(*) AS c FROM admin_users");
         if (rows[0].c === 0) {
             const user = process.env.ADMIN_DEFAULT_USER || "admin";
-            const pass = process.env.ADMIN_DEFAULT_PASS || "Admin@1234";
+            const pass = process.env.ADMIN_DEFAULT_PASS || "Pgcpaitl@Jntugv";
             const hash = await bcrypt.hash(pass, 10);
             await pool.query("INSERT INTO admin_users (username,password_hash) VALUES (?,?)", [user, hash]);
             info("Default admin user created:", user);
