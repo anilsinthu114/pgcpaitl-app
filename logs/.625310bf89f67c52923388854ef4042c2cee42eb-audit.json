@@ -29,6 +29,11 @@
             "date": 1766654508568,
             "name": "E:\\Anil\\pgcpaitl-app\\logs\\db-2025-12-25.log",
             "hash": "eb12588c02fa2da5385e5db1d962c78b02732fc0a513928353be87ccce96fb3e"
+        },
+        {
+            "date": 1766821638097,
+            "name": "E:\\Anil\\pgcpaitl-app\\logs\\db-2025-12-27.log",
+            "hash": "882e49418fa5d8db1d7876b0cb9170b8b2ae1cb965ae152d242fe84883839a89"
         }
     ],
     "hashType": "sha256"

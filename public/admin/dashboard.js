@@ -8,7 +8,7 @@ if (!token) {
 
 // helper
 async function fetchWithAuth(url, options = {}) {
-  return fetch(url, {
+  const res = await fetch(url, {
     ...options,
     cache: "no-store",
     headers: {
@@ -16,6 +16,14 @@ async function fetchWithAuth(url, options = {}) {
       ...options.headers
     }
   });
+
+  if (res.status === 401) {
+    localStorage.removeItem("adminToken");
+    window.location.href = "/admin/login.html";
+    throw new Error("Unauthorized");
+  }
+
+  return res;
 }
 
 // =====================
@@ -90,6 +98,7 @@ async function loadApplications() {
   const res = await fetchWithAuth("/api/admin/applications");
   const data = await res.json();
 
+
   if (!data.ok) {
     document.getElementById("loading").innerText = "Failed to load data.";
     return;
@@ -133,25 +142,33 @@ function applyFilters() {
     // 1. App Status Check
     let sMatch = (sVal === "all");
     if (!sMatch) {
-      if (sVal === "submitted" && app.status === "submitted") sMatch = true;
-      else if (sVal === "accepted" && app.status === "accepted") sMatch = true;
-      else if (sVal === "rejected" && app.status === "rejected") sMatch = true;
+      if (sVal === "submitted") {
+        if (app.status === "submitted" || app.status === "payment_pending") sMatch = true;
+      }
+      else if (sVal === "accepted") {
+        if (app.status === "accepted") sMatch = true;
+      }
+      else if (sVal === "rejected") {
+        // Show if app is rejected OR payment is rejected
+        if (app.status === "rejected" || app.status === "payment_rejected" || app.payment_status === "rejected") sMatch = true;
+      }
       else if (sVal === "reviewing") {
-        // "Under Review" effectively means payment uploaded but not final status
-        if (app.payment_status === 'uploaded' && app.status !== 'accepted' && app.status !== 'rejected') sMatch = true;
-        // OR literal 'reviewing' status if used
-        if (app.status === 'reviewing') sMatch = true;
+        // "Under Review" usually means payment uploaded
+        if ((app.payment_status === 'uploaded' || app.status === 'reviewing') && app.status !== 'accepted' && app.status !== 'rejected') sMatch = true;
       }
     }
 
     // 2. Payment Status Check
     let pMatch = (pVal === "all");
     if (!pMatch) {
-      const payStatus = app.payment_status || "pending";
-      if (pVal === "verified" && payStatus === "verified") pMatch = true;
-      else if (pVal === "uploaded" && payStatus === "uploaded") pMatch = true;
-      else if (pVal === "rejected" && payStatus === "rejected") pMatch = true;
-      else if (pVal === "pending") {
+      // Normalize null/undefined to 'pending'
+      const payStatus = (app.payment_status || "pending").toLowerCase();
+      const targetP = pVal.toLowerCase();
+
+      if (targetP === "verified" && payStatus === "verified") pMatch = true;
+      else if (targetP === "uploaded" && payStatus === "uploaded") pMatch = true;
+      else if (targetP === "rejected" && payStatus === "rejected") pMatch = true;
+      else if (targetP === "pending") {
         if (payStatus !== "verified" && payStatus !== "uploaded" && payStatus !== "rejected") pMatch = true;
       }
     }
@@ -197,25 +214,25 @@ function exportToExcel() {
     "Country": app.country || "",
 
     // Academic
-    "Degree Level": app.degreeLevel || "",
-    "Specialization": app.specialization || "",
-    "Institute Name": app.institutionName || "",
-    "University": app.university || "",
-    "Passing Year": app.passingYear || "",
-    "Study Mode": app.studyMode || "",
-    "Percentage": app.percentage || "",
+    "Degree Level": app.degreeLevel,
+    "Specialization": app.specialization,
+    "Institute Name": app.institutionName,
+    "University": app.university,
+    "Passing Year": app.passingYear,
+    "Study Mode": app.studyMode,
+    "Percentage": app.percentage,
 
     // Employment
-    "Employment Status": app.employmentStatus || "",
-    "Organisation": app.organisation || "",
-    "Designation": app.designation || "",
-    "Sector": app.sector || "",
-    "Experience": app.experience || "",
+    "Employment Status": app.employmentStatus,
+    "Organisation": app.organisation,
+    "Designation": app.designation,
+    "Sector": app.sector,
+    "Experience": app.experience,
 
     // Application Status
-    "App Status": app.status || "",
-    "Payment Status": app.payment_status || "Pending",
-    "UTR Number": app.payment_utr || app.utr || "", // specific fix for UTR
+    "App Status": app.status,
+    "Payment Status": app.payment_status,
+    "UTR Number": app.utr,
 
     // Dates
     "Submitted At": app.submitted_at ? new Date(app.submitted_at).toLocaleString() : "",
@@ -223,8 +240,9 @@ function exportToExcel() {
     "Payment Date": app.payment_updated_at ? new Date(app.payment_updated_at).toLocaleString() : "",
 
     // Misc
-    "SOP": app.sop || "",
-    "Declarations": app.declarations || ""
+    "Statement of Purpose": app.sop,
+    "Communication Mode": app.commMode || "",
+    "Declarations": app.declarations
   }));
 
   // Create Workbook
@@ -427,6 +445,8 @@ async function viewApplication(id) {
       <div><b> University:</b> ${escapeHtml(app.university)}</div>
       <div><b>Address:</b> ${escapeHtml(app.address)}</div>
       <div><b>Statement of Purpose:</b> ${escapeHtml(app.sop)}</div>
+      <div><b>Communication Mode:</b> ${escapeHtml(app.commMode)}</div>
+      <div><b>Declarations:</b> ${escapeHtml(app.declarations)}</div>
       <div><b>Status:</b> ${app.status}</div>
     </div>
   `;

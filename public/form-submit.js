@@ -15,19 +15,22 @@ document.addEventListener("DOMContentLoaded", () => {
         body: fd,
       });
 
-      if (!r.ok) {
-        // Server returned an error (4xx or 5xx)
-        const text = await r.text();
-        console.error(`Server Error (${r.status}):`, text);
-        throw new Error(`Server responded with status ${r.status}`);
-      }
-
       let j;
       try {
         j = await r.json();
       } catch (jsonError) {
-        console.error("Failed to parse JSON response:", jsonError);
-        throw new Error("Invalid response format from server.");
+        // Response wasn't JSON
+      }
+
+      if (!r.ok) {
+        // Server returned an error (4xx or 5xx)
+        const errorMsg = (j && j.error) ? j.error : `Server responded with status ${r.status}`;
+        console.error(`Server Error (${r.status}):`, errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      if (!j) {
+        throw new Error("Empty response from server");
       }
 
       console.log("Response received:", j);
@@ -118,7 +121,5 @@ function getFriendlyErrorMessage(technicalError) {
   if (err.includes("network") || err.includes("fetch") || err.includes("failed to fetch")) {
     return "Unable to reach the server. Please check your internet connection.";
   }
-
-  // Fallback for unknown errors
   return "We could not process your submission. Please try again.";
 }

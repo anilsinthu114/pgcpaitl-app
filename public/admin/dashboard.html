@@ -106,17 +106,18 @@
         <div style="display:flex; gap:8px; align-items:center;">
           <select id="filterStatus" style="padding:6px; border-radius:4px; border:1px solid #ddd; font-size:0.9rem;">
             <option value="all">All Application Status</option>
-            <option value="submitted">Submitted</option>
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
+            <!-- <option value="submitted">Recived Applications</option> -->
+            <option value="accepted">Accepted Applications</option>
+            <option value="rejected">Rejected Applications</option>
             <option value="reviewing">Under Review</option>
+            <option value="pending">Payment Pending Applications</option>
           </select>
 
           <select id="filterPayment" style="padding:6px; border-radius:4px; border:1px solid #ddd; font-size:0.9rem;">
             <option value="all">All Payment Status</option>
             <option value="verified">Verified</option>
-            <option value="uploaded">Uploaded (Pending Review)</option>
-            <option value="pending">Not Paid</option>
+            <option value="pending">payment pending</option>
+            <option value="uploaded">payment uploaded</option>
             <option value="rejected">Rejected</option>
           </select>
         </div>

@@ -72,8 +72,8 @@ exports.createDraft = async (req, res) => {
 
             // SOP & declarations
             req.body.sop || null,
-            (req.body.commMode || []).join(","),
-            JSON.stringify(req.body.declarations || []),
+            [].concat(req.body.commMode || []).filter(Boolean).join(","),
+            JSON.stringify([].concat(req.body.declarations || req.body.declaration || []).filter(Boolean)),
 
             // status & flow
             "pending",
@@ -91,6 +91,10 @@ exports.createDraft = async (req, res) => {
             redirect: `/payment.html?id=${pid}`
         });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+            warn("Duplicate application attempt", err.message);
+            return res.status(409).json({ ok: false, error: "Duplicate entry: This email or mobile is already registered." });
+        }
         errorLogger.error(err);
         error("Error creating application draft", err);
         res.status(500).json({ ok: false, error: err.message });
