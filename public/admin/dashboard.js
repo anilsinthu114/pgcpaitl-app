@@ -145,6 +145,9 @@ function applyFilters() {
       if (sVal === "submitted") {
         if (app.status === "submitted" || app.status === "payment_pending") sMatch = true;
       }
+      else if (sVal === "verified") {
+        if (app.payment_status === "verified") sMatch = true;
+      }
       else if (sVal === "accepted") {
         if (app.status === "accepted") sMatch = true;
       }
@@ -280,7 +283,10 @@ function updateStats(apps) {
   // 4. Approved
   const accepted = apps.filter(a => a.status === "accepted").length;
 
-  // 5. Rejected
+  // 5. Verified
+  const verified = apps.filter(a => a.payment_status === "verified").length;
+
+  // 6. Rejected
   const rejected = apps.filter(a => a.status === "rejected").length;
 
 
@@ -289,6 +295,7 @@ function updateStats(apps) {
   document.getElementById("pendingApps").innerText = pending;
   document.getElementById("reviewingApps").innerText = reviewing;
   document.getElementById("acceptedApps").innerText = accepted;
+  document.getElementById("verifiedApps").innerText = verified;
   document.getElementById("rejectedApps").innerText = rejected;
 }
 
@@ -690,7 +697,7 @@ async function activatePaymentForAll() {
 // =====================
 function escapeHtml(str) {
   if (!str) return "";
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
