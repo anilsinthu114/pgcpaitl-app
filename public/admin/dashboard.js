@@ -290,13 +290,13 @@ function updateStats(apps) {
   const rejected = apps.filter(a => a.status === "rejected").length;
 
 
-  document.getElementById("totalApps").innerText = total;
-  document.getElementById("submittedApps").innerText = submitted;
-  document.getElementById("pendingApps").innerText = pending;
-  document.getElementById("reviewingApps").innerText = reviewing;
-  document.getElementById("acceptedApps").innerText = accepted;
-  document.getElementById("verifiedApps").innerText = verified;
-  document.getElementById("rejectedApps").innerText = rejected;
+  if (document.getElementById("totalApps")) document.getElementById("totalApps").innerText = total;
+  if (document.getElementById("submittedApps")) document.getElementById("submittedApps").innerText = submitted;
+  if (document.getElementById("pendingApps")) document.getElementById("pendingApps").innerText = pending;
+  if (document.getElementById("reviewingApps")) document.getElementById("reviewingApps").innerText = reviewing;
+  if (document.getElementById("acceptedApps")) document.getElementById("acceptedApps").innerText = accepted;
+  if (document.getElementById("verifiedApps")) document.getElementById("verifiedApps").innerText = verified;
+  if (document.getElementById("rejectedApps")) document.getElementById("rejectedApps").innerText = rejected;
 }
 
 // =====================

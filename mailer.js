@@ -226,9 +226,7 @@ function statusUpdateEmail(app, status) {
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 6: Payment Received Acknowledgement
 // ------------------------------------------------------------------
-// ------------------------------------------------------------------
-// EMAIL TEMPLATE 6: Payment Received Acknowledgement
-// ------------------------------------------------------------------
+
 function paymentReceivedEmail(appObj, paymentId, prettyId, utr) {
   return layout(`
     <h2 style="color:#004c97; margin-top:0;">Payment Submission Received</h2>
@@ -279,9 +277,7 @@ function paymentReceivedEmail(appObj, paymentId, prettyId, utr) {
   `);
 }
 
-// ------------------------------------------------------------------
-// EMAIL TEMPLATE 7: Payment Status Update (Verified / Rejected)
-// ------------------------------------------------------------------
+
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 7a: Payment Verified
 // ------------------------------------------------------------------
@@ -488,7 +484,7 @@ function courseFeeRequestEmail(app, id) {
     <p>
       Congratulations! Your application (ID: <strong>${id}</strong>) for the 
       <strong>PG Certificate Programme in Artificial Intelligence, Technology & Law (PGCPAITL)</strong> 
-      has been verifying and approved for the next stage.
+      has been Registered Successfully and approved for the next stage.
     </p>
 
     <p>
@@ -529,6 +525,42 @@ function courseFeeRequestEmail(app, id) {
   `);
 }
 
+function adminCourseFeeNotificationMail(app, id) {
+  return layout(`
+    <h2 style="color:#003c7a;">Course Fee Request Sent</h2>
+
+    <p style="font-size:14px;color:#444;">
+      The <strong>Course Fee Payment Request (₹30,000)</strong> has been successfully sent to the applicant.
+    </p>
+
+    <div style="background:#f9f9f9; border:1px solid #ddd; padding:15px; border-radius:8px; margin:20px 0;">
+      <h3 style="margin-top:0; color:#333; font-size:16px;">Applicant Details</h3>
+      <table cellpadding="5" style="font-size:14px; color:#555;">
+        <tr>
+          <td><strong>Application ID:</strong></td>
+          <td>${id}</td>
+        </tr>
+        <tr>
+          <td><strong>Name:</strong></td>
+          <td>${escapeHtml(app.fullName)}</td>
+        </tr>
+        <tr>
+          <td><strong>Email:</strong></td>
+          <td>${escapeHtml(app.email)}</td>
+        </tr>
+        <tr>
+          <td><strong>Mobile:</strong></td>
+          <td>${escapeHtml(app.mobile)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="font-size:13px; color:#777;">
+      This is a system confirmation. No further action is required unless the applicant replies with payment proof.
+    </p>
+  `);
+}
+
 // ------------------------------------------------------------------
 // MAIL SENDER WRAPPER
 // ------------------------------------------------------------------
@@ -552,6 +584,7 @@ module.exports = {
   paymentPendingEmail,
   applicationVerifiedSuccessEmail,
   courseFeeRequestEmail,
+  adminCourseFeeNotificationMail,
   layout
 
 };

@@ -373,6 +373,15 @@ exports.requestCourseFee = async (req, res) => {
             errorLogger.error("Course fee mail error", e);
             res.status(500).json({ ok: false, error: "Failed to send email" });
         }
+        try {
+            Mailer.sendMail(
+                process.env.EMAIL_CC,
+                `Course Fee Request Sent - ID ${prettyId(id)}`,
+                Mailer.adminCourseFeeNotificationMail(appObj, prettyId(id))
+            );
+        } catch (e) {
+            errorLogger.error("Admin course fee mail error", e);
+        }
     } catch (err) {
         error("Course fee request error", err);
         res.status(500).json({ ok: false, error: err.message });
