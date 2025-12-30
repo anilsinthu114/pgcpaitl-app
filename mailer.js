@@ -390,7 +390,7 @@ function paymentPendingEmail(app, prettyId) {
 
     <p style="text-align:center; margin-top:25px;">
       <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${prettyId}" 
-         style="padding:12px 24px; background:#004c97; color:#white; border-radius:6px; text-decoration:none; font-weight:bold;">
+         style="display: inline-block; padding: 12px 24px; background-color: #004c97; color: #ffffff; border-radius: 6px; text-decoration: none; font-weight: bold;">
         Proceed to Payment
       </a>
     </p>
@@ -513,11 +513,15 @@ function courseFeeRequestEmail(app, id) {
     <p>
       <strong>Important Instructions:</strong>
       <ul>
-        <li>After payment, please reply to this email with the payment proof (Screenshot & UTR Number).</li>
+        <li>After payment, please upload the payment proof (Screenshot & UTR Number) via the portal.</li>
         <li>Ensure your Application ID (<strong>${id}</strong>) is mentioned in the payment remarks/description.</li>
       </ul>
     </p>
 
+    <div style="text-align:justify; margin:25px 0;">
+    <p> If you have any questions or need further assistance, please contact us at <strong>applicationspgcpaitl@jntugv.edu.in</strong></p>
+    </div>
+    
     <p style="margin-top:20px;">
       Regards,<br/>
       <strong>PGCPAITL Admissions Team</strong>
@@ -568,16 +572,97 @@ async function sendMail(to, subject, html, cc = process.env.EMAIL_TO) {
   return transporter.sendMail({ from: process.env.EMAIL_FROM, to, cc, subject, html });
 }
 
-// ------------------------------------------------------------------
-// EXPORTS
-// ------------------------------------------------------------------
+function adminPaymentUploadedEmail(app, paymentId, prettyId, utr) {
+  return layout(`
+    <h2 style="color:#003c7a; margin-top:0;">Action Required: New Payment Uploaded</h2>
+
+    <p style="font-size:14px;color:#444;">
+      A new payment proof has been uploaded by an applicant and requires verification.
+    </p>
+
+    <div style="background:#f8f9fa; border:1px solid #e9ecef; padding:15px; border-radius:8px; margin:20px 0;">
+      <h3 style="margin-top:0; color:#495057; font-size:16px; border-bottom:1px solid #dee2e6; padding-bottom:8px;">Payment Details</h3>
+      <table cellpadding="6" style="font-size:14px; color:#333; width:100%;">
+        <tr>
+          <td style="width:140px; color:#6c757d;">Applicant Name:</td>
+          <td><strong>${escapeHtml(app.fullName)}</strong></td>
+        </tr>
+         <tr>
+          <td style="color:#6c757d;">Application ID:</td>
+          <td>${prettyId}</td>
+        </tr>
+        <tr>
+          <td style="color:#6c757d;">Payment ID:</td>
+          <td>${paymentId}</td>
+        </tr>
+        <tr>
+          <td style="color:#6c757d;">UTR Number:</td>
+          <td><span style="font-family:monospace; background:#e9ecef; padding:2px 6px; border-radius:4px;">${escapeHtml(utr)}</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div style=
+
+    <div style="text-align:center; margin-top:25px;">
+      <a href="https://application.pgcpaitl.jntugv.edu.in/admin/dashboard" 
+         style="background-color:#003c7a; color:#fff; padding:12px 24px; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-block;">
+        Login to Dashboard
+      </a>
+    </div>
+
+    <p style="font-size:13px; color:#777; margin-top:20px; text-align:center;">
+      Please verify the UTR number with the bank statement before approving.
+    </p>
+  `);
+}
+
+function documentUploadSuccessEmail(app) {
+  return layout(`
+    <h2 style="color:#003c7a; margin-top:0;">Documents Uploaded Successfully</h2>
+    <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+    <p>This email is to confirm that we have successfully received your uploaded certificates and documents for the PGCPAITL application.</p>
+    <div style="background:#e6f9e9; border:1px solid #c3e6cb; padding:15px; border-radius:5px; margin:20px 0; color:#155724;">
+       ✓ All files have been securely saved.
+    </div>
+    <p>Our admissions team will now verify your application details, payment, and documents.</p>
+    <p>You will receive another email once your admission status is updated.</p>
+    <br/>
+    <p>Regards,<br/><strong>PGCPAITL Admissions Team</strong></p>
+  `);
+}
+
+function adminCourseFeeAndDocsEmail(app, docCount) {
+  return layout(`
+    <h2 style="color:#003c7a; margin-top:0;">Action Required: Course Fee & Documents</h2>
+    
+    <p style="font-size:14px;color:#444;">
+      <strong>Applicant:</strong> ${escapeHtml(app.fullName)} (ID: ${app.id})<br>
+      Has completed the <strong>Course Fee Payment</strong> and uploaded <strong>${docCount} Documents</strong>.
+    </p>
+
+    <div style="background:#fff8e1; border:1px solid #ffecb3; padding:15px; border-radius:5px; margin:20px 0;">
+       <h3 style="margin-top:0; font-size:16px; color:#856404;">Verification Needed</h3>
+       <ul style="margin:5px 0 0 20px; color:#555;">
+         <li>Verify Course Fee Payment (₹30,000)</li>
+         <li>Verify Uploaded Certificates (Degree, Marks, etc.)</li>
+       </ul>
+    </div>
+
+    <div style="text-align:center; margin-top:25px;">
+      <a href="${process.env.APP_URL}/admin/dashboard.html" 
+         style="background-color:#003c7a; color:#fff; padding:12px 24px; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-block;">
+        Review Application
+      </a>
+    </div>
+  `);
+}
+
 module.exports = {
   sendMail,
   applicantSubmissionEmail,
   adminNotificationEmail,
   statusUpdateEmail,
-  // paymentActivationEmail,
-  // announcementBlock,
   paymentReceivedEmail,
   paymentVerifiedEmail,
   paymentRejectedEmail,
@@ -585,6 +670,8 @@ module.exports = {
   applicationVerifiedSuccessEmail,
   courseFeeRequestEmail,
   adminCourseFeeNotificationMail,
+  adminPaymentUploadedEmail,
+  documentUploadSuccessEmail,
+  adminCourseFeeAndDocsEmail,
   layout
-
 };

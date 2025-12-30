@@ -248,10 +248,22 @@ exports.listApplications = async (_, res) => {
 
         const [rows] = await pool.query(`
     SELECT a.*, 
+           -- Latest (Legacy/Dashboard Support)
            (SELECT status FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_status,
            (SELECT utr FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_utr,
            (SELECT payment_type FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_type,
-           (SELECT updated_at FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_updated_at
+           (SELECT updated_at FROM application_payments WHERE application_id = a.id ORDER BY id DESC LIMIT 1) as payment_updated_at,
+
+           -- Registration Details
+           (SELECT status FROM application_payments WHERE application_id = a.id AND payment_type='registration' ORDER BY id DESC LIMIT 1) as reg_status,
+           (SELECT utr FROM application_payments WHERE application_id = a.id AND payment_type='registration' ORDER BY id DESC LIMIT 1) as reg_utr,
+           (SELECT updated_at FROM application_payments WHERE application_id = a.id AND payment_type='registration' ORDER BY id DESC LIMIT 1) as reg_date,
+
+           -- Course Fee Details
+           (SELECT status FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_status,
+           (SELECT utr FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_utr,
+           (SELECT updated_at FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_date
+
     FROM applications a
     ORDER BY a.created_at DESC
   `);
@@ -470,5 +482,127 @@ exports.downloadFile = async (req, res) => {
     } catch (err) {
         error("Download error", err);
         res.status(500).send("Server Error");
+    }
+};
+
+exports.uploadDocuments = async (req, res) => {
+    debug("Document upload request received");
+
+    // Debugging payload
+    // debug("Body:", req.body); 
+    // debug("Files keys:", Object.keys(req.files || {}));
+
+    let { application_id } = req.body;
+
+    // Handle case where application_id is an array (some clients/multiparts do this)
+    if (Array.isArray(application_id)) {
+        application_id = application_id[0];
+    }
+
+    // Strict validation: Ensure it's not just whitespace and is a valid positive number
+    if (!application_id || !String(application_id).trim()) {
+        errorLogger.error("Upload missing application_id", { body: req.body });
+        return res.status(400).json({ ok: false, error: "Missing application ID" });
+    }
+
+    const numericId = Number(application_id);
+
+    if (isNaN(numericId) || numericId <= 0) {
+        errorLogger.error("Upload invalid application_id", { application_id });
+        return res.status(400).json({ ok: false, error: "Invalid application ID" });
+    }
+
+    debug("Processing upload for App ID:", numericId);
+
+    const conn = await pool.getConnection();
+
+    try {
+        // Verify Application Exists in DB (to prevent Foreign Key error)
+        const [[appExists]] = await conn.query("SELECT id FROM applications WHERE id=?", [numericId]);
+
+        if (!appExists) {
+            errorLogger.error("Upload failed: Application ID not found in DB", { numericId });
+            return res.status(404).json({ ok: false, error: "Application record not found. Please contact support." });
+        }
+
+        await conn.beginTransaction();
+
+        // Save file info
+        const files = req.files;
+        const fileTypes = ['photo', 'id_proof', 'degree', 'marks', 'other'];
+
+        // Define mapping for clear DB types
+        const typeMapping = {
+            photo: 'Passport Photo',
+            id_proof: 'ID Proof',
+            degree: 'Degree Certificate',
+            marks: 'Marks Sheet',
+            other: 'Other Documents'
+        };
+
+        for (const type of fileTypes) {
+            // Check if files[type] exists and has files
+            if (files[type] && files[type].length > 0) {
+                // Iterate over all files for this type (supports multiple 'other' docs)
+                for (const f of files[type]) {
+                    const storedPath = path.join('applications', String(numericId), `doc_${type}_${Date.now()}_${Math.floor(Math.random() * 1000)}${path.extname(f.originalname)}`);
+
+                    // Ensure directory exists
+                    const fullPath = path.join(FILE_BASE, storedPath);
+                    const dir = path.dirname(fullPath);
+                    await fs.mkdir(dir, { recursive: true });
+
+                    await fs.writeFile(fullPath, f.buffer);
+
+                    await conn.query(
+                        `INSERT INTO application_files (application_id, type, original_name, stored_name, stored_path, mime, size_bytes)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            numericId,
+                            typeMapping[type],
+                            f.originalname,
+                            path.basename(storedPath), // stored_name
+                            storedPath,
+                            f.mimetype,
+                            f.size
+                        ]
+                    );
+                }
+            }
+        }
+
+        await conn.commit();
+
+        // Send Success Email
+        try {
+            const [rows] = await pool.query("SELECT * FROM applications WHERE id=?", [numericId]);
+            if (rows.length > 0) {
+                const appObj = rows[0];
+                Mailer.sendMail(
+                    appObj.email,
+                    `Documents Received - Application: ${prettyId(numericId)}`,
+                    Mailer.documentUploadSuccessEmail(appObj)
+                );
+
+                // Notify Admin: Course Fee & Docs (Consolidated)
+                // We assume if they are uploading docs, they likely just paid the course fee.
+                Mailer.sendMail(
+                    process.env.EMAIL_FROM,
+                    `Action Required: Course Fee & Documents (ID: ${prettyId(numericId)})`,
+                    Mailer.adminCourseFeeAndDocsEmail(appObj, totalFilesUploaded)
+                );
+            }
+        } catch (e) {
+            errorLogger.error("Doc upload email error", e);
+        }
+
+        res.json({ ok: true, message: "Documents uploaded successfully" });
+
+    } catch (err) {
+        await conn.rollback();
+        errorLogger.error("Document upload error", err);
+        res.status(500).json({ ok: false, error: "Failed to save documents." });
+    } finally {
+        conn.release();
     }
 };

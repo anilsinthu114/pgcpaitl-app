@@ -7,6 +7,17 @@ const router = express.Router();
 
 // Public
 router.post("/draft", uploadMiddleware.none(), appController.createDraft);
+router.post(
+    "/api/application/upload-documents",
+    uploadMiddleware.fields([
+        { name: "photo", maxCount: 1 },
+        { name: "id_proof", maxCount: 1 },
+        { name: "degree", maxCount: 1 },
+        { name: "marks", maxCount: 1 },
+        { name: "other", maxCount: 5 },
+    ]),
+    appController.uploadDocuments
+);
 router.get("/api/application/status", appController.checkStatus);
 router.get("/api/resolve-id", appController.resolveId);
 router.put("/application/:id/submit", appController.submitApplication);

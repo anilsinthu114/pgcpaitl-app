@@ -1,0 +1,124 @@
+<!doctype html>
+<!-- cSpell:words PGCPAITL PGCP IFSC JNTU Vizianagaram -->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>PGCPAITL — Upload Documents</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="/css/modern-student.css">
+    <link rel="stylesheet" href="/css/gateway.css">
+</head>
+
+<body>
+
+    <div class="gateway-wrapper">
+        <!-- LEFT PANEL: INSTRUCTIONS -->
+        <div class="gateway-left">
+            <div class="order-header">
+                <h2>Next Steps</h2>
+                <h1>Document Upload</h1>
+            </div>
+
+            <div class="order-amount">
+                <div class="amount-label" style="opacity: 0.9; color: #4caf50; font-weight: bold;">
+                    ✓ Payment Received
+                </div>
+                <div class="amount-value" style="font-size: 24px; color: white;">₹30,000.00</div>
+                <div style="font-size:12px; opacity:0.6; margin-top:5px;">Transaction Recorded</div>
+            </div>
+
+            <div class="order-details">
+                <p><span>Application ID</span> <strong id="displayAppId">Loading...</strong></p>
+                <div style="margin-top: 20px; line-height: 1.6; font-size: 13px; opacity: 0.8;">
+                    Please upload the required documents to finalize your admission.
+                    Ensure all scans are clear and readable.
+                </div>
+            </div>
+
+            <div class="gateway-footer">
+                © 2025 JNTU-GV. Secure Portal.
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: UPLOAD FORM -->
+        <div class="gateway-right">
+            <div class="payment-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                Upload Certificates
+            </div>
+
+            <div class="info-banner">
+                <strong>Required:</strong> Upload clear scans (PDF/JPG) of the following documents.<br>
+                Max file size: 2MB per file.
+            </div>
+
+            <div class="form-section">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="hidden" name="application_id" id="application_id">
+
+                    <!-- 1. Photo -->
+                    <div class="input-group">
+                        <label>Recent Passport Size Photograph <span style="color:red">*</span></label>
+                        <input type="file" name="photo" id="photo" accept="image/jpeg,image/png,image/jpg" required
+                            class="file-upload-input">
+                        <p class="help-text">Clear face, light background.</p>
+                    </div>
+
+                    <!-- 2. ID Proof -->
+                    <div class="input-group">
+                        <label>ID Proof (Aadhaar / PAN / Passport) <span style="color:red">*</span></label>
+                        <input type="file" name="id_proof" id="id_proof" accept=".pdf,image/jpeg,image/png" required
+                            class="file-upload-input">
+                        <p class="help-text">Government issued ID.</p>
+                    </div>
+
+                    <!-- 3. Degree -->
+                    <div class="input-group">
+                        <label>Degree / Provisional Certificate <span style="color:red">*</span></label>
+                        <input type="file" name="degree" id="degree" accept=".pdf,image/jpeg,image/png" required
+                            class="file-upload-input">
+                        <p class="help-text">Proof of completion of qualifying degree.</p>
+                    </div>
+
+                    <!-- 4. Marks -->
+                    <div class="input-group">
+                        <label>UG Mark Sheet (Consolidated / All Semesters) <span style="color:red">*</span></label>
+                        <input type="file" name="marks" id="marks" accept=".pdf,image/jpeg,image/png" required
+                            class="file-upload-input">
+                        <p class="help-text">Single PDF preferred.</p>
+                    </div>
+
+                    <!-- 5. Supporting Docs -->
+                    <div class="input-group">
+                        <label>Supporting Documents (Optional)</label>
+                        <input type="file" name="other" id="other" accept=".pdf,image/jpeg,image/png" multiple
+                            class="file-upload-input">
+                        <p class="help-text">Experience certs, other certifications etc.</p>
+                        <p class="help-text">Multiple files can be uploaded and limited to 5 files</p>
+                    </div>
+
+                    <div id="uploadMsg" style="margin-bottom:15px; font-size:13px;"></div>
+
+                    <button id="submitBtn" type="submit" class="btn-pay">
+                        Submit Documents & Finish
+                    </button>
+                </form>
+
+                <div class="secure-badge">
+                    🔒 Secure File Transfer
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/upload-documents.js" defer></script>
+</body>
+
+</html>

@@ -71,19 +71,30 @@ exports.submitPayment = async (req, res) => {
         );
         debug("Payment received email sent");
 
-        // Notify Admin
-        try {
-            Mailer.sendMail(
-                process.env.EMAIL_FROM,
-                `Action Required: New Payment Uploaded (ID: ${paymentId})`,
-                `<p>New payment uploaded for Application <b>${prettyId(numericId)}</b>.<br>UTR: ${utr}<br>Please login to dashboard to verify.</p>`
-            );
-        } catch (e) { errorLogger.error("Admin payment mail error", e); }
+        // Notify Admin (ONLY for Registration Fee, Course Fee handled after docs)
+        const pType = Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration');
+
+        if (pType !== 'course_fee') {
+            try {
+                Mailer.sendMail(
+                    process.env.EMAIL_FROM,
+                    `Action Required: New Payment Uploaded (ID: ${paymentId})`,
+                    Mailer.adminPaymentUploadedEmail(appRow, paymentId, prettyId(numericId), utr)
+                );
+            } catch (e) { errorLogger.error("Admin payment mail error", e); }
+        }
 
         paymentLogger.info("Payment uploaded", { application_id });
         debug("Payment uploaded", { application_id });
 
-        res.json({ ok: true, message: "Payment submitted" });
+        let redirectUrl = null;
+        if (req.body.payment_type === 'course_fee' || (Array.isArray(req.body.payment_type) && req.body.payment_type[0] === 'course_fee')) {
+            // Logic to redirect
+            const pid = prettyId(numericId);
+            redirectUrl = `/upload-documents.html?id=${pid}`;
+        }
+
+        res.json({ ok: true, message: "Payment submitted", redirect: redirectUrl });
 
     } catch (err) {
         await conn.rollback();

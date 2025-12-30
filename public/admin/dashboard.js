@@ -234,13 +234,22 @@ function exportToExcel() {
 
     // Application Status
     "App Status": app.status,
-    "Payment Status": app.payment_status,
-    "UTR Number": app.utr,
+    // Registration Payment
+    "Reg. Status": app.reg_status || "Pending",
+    "Reg. UTR": app.reg_utr || "",
+    "Reg. Date": app.reg_date ? new Date(app.reg_date).toLocaleDateString() : "",
+
+    // Course Fee Payment
+    "Course Fee Status": app.course_status || "Pending",
+    "Course Fee UTR": app.course_utr || "",
+    "Course Fee Date": app.course_date ? new Date(app.course_date).toLocaleDateString() : "",
+
+    // Latest Status (Summary)
+    "Latest App Status": app.status,
+    "Latest Pay Status": app.payment_status,
 
     // Dates
     "Submitted At": app.submitted_at ? new Date(app.submitted_at).toLocaleString() : "",
-    "Created At": app.created_at ? new Date(app.created_at).toLocaleString() : "",
-    "Payment Date": app.payment_updated_at ? new Date(app.payment_updated_at).toLocaleString() : "",
 
     // Misc
     "Statement of Purpose": app.sop,
@@ -504,13 +513,41 @@ async function viewApplication(id) {
   // Files Section
   const fileDiv = document.getElementById("appFiles");
   fileDiv.innerHTML = "";
+  fileDiv.style.display = "grid";
+  fileDiv.style.gridTemplateColumns = "repeat(auto-fill, minmax(250px, 1fr))";
+  fileDiv.style.gap = "15px";
+  fileDiv.style.marginTop = "15px";
 
   files.forEach(f => {
     const el = document.createElement("div");
-    el.className = "file-item";
+    el.className = "file-card";
+    el.style.border = "1px solid #e0e0e0";
+    el.style.borderRadius = "8px";
+    el.style.padding = "15px";
+    el.style.backgroundColor = "#fff";
+    el.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+    el.style.display = "flex";
+    el.style.flexDirection = "column";
+    el.style.justifyContent = "space-between";
+
+    // Icon based on type (simple text fallback or unicode)
+    let icon = "📄";
+    if (f.type.includes("Photo")) icon = "📷";
+    if (f.type.includes("Degree")) icon = "🎓";
+    if (f.type.includes("ID")) icon = "🆔";
+
     el.innerHTML = `
-      <span>${escapeHtml(f.original_name)}</span>
-      <button class="download-btn" data-file="${f.id}">Download</button>
+      <div style="display:flex; align-items:center; margin-bottom:10px;">
+        <span style="font-size:1.5rem; margin-right:10px;">${icon}</span>
+        <div>
+           <div style="font-weight:bold; color:#333; font-size:0.9rem;">${escapeHtml(f.type)}</div>
+           <div style="color:#777; font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;" title="${escapeHtml(f.original_name)}">${escapeHtml(f.original_name)}</div>
+        </div>
+      </div>
+      <button class="download-btn" data-file="${f.id}" 
+        style="background:#003366; color:white; border:none; padding:8px 12px; border-radius:4px; font-size:0.85rem; cursor:pointer; width:100%; text-align:center; transition:background 0.2s;">
+        Download File
+      </button>
     `;
     fileDiv.appendChild(el);
   });

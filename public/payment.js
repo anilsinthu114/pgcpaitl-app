@@ -73,10 +73,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const fd = new FormData(form);
 
-    // FormData captures all form fields automatically, including payment_type if present.
-    // No need to append manually.
 
-    if (!fd.get("amount")) fd.set("amount", "1000");
+    // If amount is not set (e.g. from hidden field), warn and default.
+    if (!fd.get("amount")) {
+      console.warn("⚠️ Amount not found in form, defaulting to 1000");
+      fd.set("amount", "1000");
+    }
+
+    // Ensure payment_type is present
+    if (!fd.get("payment_type")) {
+      console.warn("⚠️ payment_type not found, defaulting to 'registration'");
+      fd.set("payment_type", "registration");
+    }
 
     console.log("📤 Uploading payment:", Object.fromEntries(fd.entries()));
 

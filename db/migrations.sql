@@ -83,6 +83,7 @@ CREATE TABLE application_payments (
     amount DECIMAL(10,2) DEFAULT 1000.00,        -- Payment amount
     payment_mode ENUM('SBI_QR','UPI','BANK') 
         DEFAULT 'SBI_QR',
+    payment_type ENUM('registration', 'course_fee') DEFAULT 'registration',
 
     screenshot_path VARCHAR(255) DEFAULT NULL,   -- Stored screenshot full path
     
