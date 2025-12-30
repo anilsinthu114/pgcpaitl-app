@@ -10,44 +10,69 @@
 
 <body>
 
-    <div class="page">
-        <div class="card" style="max-width: 500px; margin: 0 auto;">
+    <div class="page" style="max-width: 1000px;">
 
-            <div class="form-header">
-                <div class="header-logo">
-                    <img src="/jntugv-logo.png" alt="Logo">
-                </div>
-                <div class="header-title">
-                    <h1>Track Application</h1>
-                    <h2>Check current status of your admission form</h2>
-                </div>
+        <div class="form-header">
+            <div class="header-logo">
+                <img src="/images/jntugv-logo.png" alt="Logo"
+                    onerror="this.src='https://jntugv.edu.in/static/media/jntugvcev.b33bb43b07b2037ab043.jpg'"
+                    style="height:70px;">
             </div>
+            <div class="header-title">
+                <h1>Application Portal</h1>
+                <h2>Track your admission progress in real-time</h2>
+            </div>
+        </div>
 
+        <!-- Initial Search Form (Hidden after search if successful) -->
+        <div id="searchPanel" class="card" style="max-width: 500px; margin: 0 auto;">
+            <h3 style="margin-top:0; color:#004c97;">Access Your Application</h3>
             <form id="trackForm">
                 <div class="form-group">
                     <label>Application ID</label>
-                    <input type="text" id="appId" placeholder="e.g. 123 or PGCPAITL-2025-000123" required>
+                    <input type="text" id="appId" placeholder="e.g. PGCPAITL-2025-0023" required>
                 </div>
-
                 <div class="form-group">
-                    <label>Registered Email or Mobile</label>
-                    <input type="text" id="identifier" placeholder="Email or Mobile used to apply" required>
+                    <label>Registered Email</label>
+                    <input type="text" id="identifier" placeholder="Email used during registration" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%">View Dashboard</button>
+            </form>
+            <div id="resultMsg" style="color:red; margin-top:10px; text-align:center;"></div>
+        </div>
+
+        <!-- Main Dashboard (Hidden initially) -->
+        <div id="dashboardPanel" style="display:none; grid-template-columns: 1fr 2fr; gap: 30px; margin-top:20px;">
+
+            <!-- Left: Profile Card -->
+            <div class="card" style="height:fit-content;">
+                <h3 style="border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-top:0;">Applicant Profile</h3>
+                <div style="text-align:center; margin:20px 0;">
+                    <div
+                        style="width:80px; height:80px; background:#e0e0e0; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:2rem;">
+                        👤</div>
+                    <h2 id="profileName" style="margin:10px 0 5px; font-size:1.2rem; color:#333;"></h2>
+                    <p id="profileId" style="color:#666; margin:0; font-weight:bold;"></p>
                 </div>
 
-                <button type="submit" class="btn-primary" style="width:100%">Check Status</button>
-            </form>
+                <div style="font-size:0.9rem; color:#555;">
+                    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                    <p><strong>Mobile:</strong> <span id="profileMobile"></span></p>
+                    <p><strong>Course:</strong> <span id="profileCourse"></span></p>
 
-            <div id="result" class="status-result" style="display:none;">
-                <h3 id="resName" style="margin:0 0 10px;"></h3>
-                <div id="resBadge" class="status-badge"></div>
-                <p id="resMsg" style="margin-bottom:0"></p>
-
-                <div id="payAction" style="margin-top:15px; display:none;">
-                    <a href="#" id="payLink" class="btn-primary"
-                        style="display:inline-block; text-decoration:none;">Make Payment</a>
+                    <div id="statusBadgeContainer" style="margin-top:20px; text-align:center;"></div>
                 </div>
             </div>
 
+            <!-- Right: Timeline -->
+            <div class="card">
+                <h3 style="border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-top:0;">Admission Timeline</h3>
+
+                <div class="timeline-container" id="timelineContainer">
+                    <!-- Steps will be injected here by JS -->
+                </div>
+
+            </div>
         </div>
     </div>
 

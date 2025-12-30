@@ -350,7 +350,8 @@ function renderApplications(apps) {
     }
 
     let requestFeeBtn = "";
-    if (payStatus === 'verified') {
+    // Show 'Req. Fee' only if Registration is verified AND Course Fee is NOT verified
+    if (payStatus === 'verified' && (!app.course_status || app.course_status !== 'verified')) {
       requestFeeBtn = `<button class="btn-sm js-request-fee-btn" data-id="${app.id}" style="background:#8e44ad; color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Req. Fee</button>`;
     }
 
@@ -384,7 +385,7 @@ function renderApplications(apps) {
     }
 
     let gridRequestFeeBtn = "";
-    if (payStatus === 'verified') {
+    if (payStatus === 'verified' && (!app.course_status || app.course_status !== 'verified')) {
       gridRequestFeeBtn = `<button class="btn-sm js-request-fee-btn" data-id="${app.id}" style="background:transparent; border:1px solid #8e44ad; color:#8e44ad; margin-left:10px;">Req. Fee</button>`;
     }
 

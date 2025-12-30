@@ -37,11 +37,44 @@ exports.submitPayment = async (req, res) => {
             await fs.writeFile(screenshotPath, req.file.buffer);
         }
 
+        // Check for duplicate UTR usage
+        const [[existingPayment]] = await conn.query(
+            "SELECT id, status FROM application_payments WHERE utr=? LIMIT 1",
+            [utr]
+        );
+
+        if (existingPayment) {
+            warn(`Duplicate payment submission attempt for UTR: ${utr}`);
+            await conn.rollback();
+
+            // If it's the same application, treat as success (idempotency)
+            // But if status is already 'verified', we might alert? 
+            // For now, consistent with user request "add payment done status if any duplicates", we just return OK.
+
+            let redirectUrl = null;
+            if (req.body.payment_type === 'course_fee' || (Array.isArray(req.body.payment_type) && req.body.payment_type[0] === 'course_fee')) {
+                const pid = prettyId(numericId);
+                redirectUrl = `/upload-documents.html?id=${pid}`;
+            }
+
+            return res.json({ ok: true, message: "Payment already submitted", redirect: redirectUrl, status: 'duplicate' });
+        }
+
+        const paymentType = Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration');
+
+        // Strict Amount Enforcer
+        let finalAmount = 1000;
+        if (paymentType === 'course_fee') {
+            finalAmount = 30000;
+        } else {
+            finalAmount = 1000;
+        }
+
         const [r] = await conn.query(
             `INSERT INTO application_payments
-         (application_id,utr,screenshot_path,status,payment_type)
-         VALUES (?,?,?,?,?)`,
-            [numericId, utr, screenshotPath, 'uploaded', Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration')] // Handle array if mulitple inputs exist
+         (application_id,utr,screenshot_path,status,payment_type,amount)
+         VALUES (?,?,?,?,?,?)`,
+            [numericId, utr, screenshotPath, 'uploaded', paymentType, finalAmount]
         );
         const paymentId = `PGCPAITL-Pay-${String(r.insertId).padStart(6, "0")}`;
         debug("Payment submission created", r.insertId);

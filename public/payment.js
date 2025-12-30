@@ -74,16 +74,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const fd = new FormData(form);
 
 
-    // If amount is not set (e.g. from hidden field), warn and default.
-    if (!fd.get("amount")) {
-      console.warn("⚠️ Amount not found in form, defaulting to 1000");
-      fd.set("amount", "1000");
-    }
+    // ---------------------------------------------
+    // STRICTLY ENFORCE VALUES BASED ON PAGE CONTEXT
+    // ---------------------------------------------
+    const isCourseFeePage = window.location.pathname.includes("course-fee.html");
 
-    // Ensure payment_type is present
-    if (!fd.get("payment_type")) {
-      console.warn("⚠️ payment_type not found, defaulting to 'registration'");
+    if (isCourseFeePage) {
+      // Course Fee: 30,000
+      fd.set("payment_type", "course_fee");
+      fd.set("amount", "30000");
+      console.log("ℹ️ Context: Course Fee Page (Force set 30000)");
+    } else {
+      // Registration Fee: 1,000
       fd.set("payment_type", "registration");
+      fd.set("amount", "1000");
+      console.log("ℹ️ Context: Registration Page (Force set 1000)");
     }
 
     console.log("📤 Uploading payment:", Object.fromEntries(fd.entries()));

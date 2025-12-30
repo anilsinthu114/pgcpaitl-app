@@ -606,3 +606,260 @@ exports.uploadDocuments = async (req, res) => {
         conn.release();
     }
 };
+
+exports.checkStatus = async (req, res) => {
+    const { id, identifier } = req.query;
+
+    if (!id || !identifier) {
+        return res.status(400).json({ ok: false, error: "Missing ID or Identifier" });
+    }
+
+    try {
+        let numericId = id;
+        if (String(id).includes("-")) {
+            numericId = Number(id.split("-").pop());
+        }
+
+        const [[app]] = await pool.query(
+            `SELECT id, fullName, status, flow_state, email, mobile 
+             FROM applications 
+             WHERE id = ? AND (email = ? OR mobile = ?)`,
+            [numericId, identifier, identifier]
+        );
+
+        if (app) {
+            // Determine display status
+            let displayStatus = app.status;
+            if (app.flow_state === 'submitted') {
+                // Check if payment is pending
+                const [[payment]] = await pool.query(
+                    "SELECT status FROM application_payments WHERE application_id=? AND payment_type='course_fee' ORDER BY id DESC LIMIT 1",
+                    [app.id]
+                );
+
+                // If in submitted state but course fee not paid/verified, we might want to show that.
+                // However, for simple tracking:
+                displayStatus = app.status;
+            }
+
+            return res.json({
+                ok: true,
+                fullName: app.fullName,
+                status: displayStatus,
+                prettyId: prettyId(app.id)
+            });
+        } else {
+            return res.json({ ok: false, error: "Not found" });
+        }
+    } catch (e) {
+        errorLogger.error("Status check error", e);
+        return res.status(500).json({ ok: false, error: "Server error" });
+    }
+};
+
+exports.checkStatusPro = async (req, res) => {
+    const { id, identifier } = req.query;
+
+    if (!id || !identifier) {
+        return res.status(400).json({ ok: false, error: "Missing ID or Identifier" });
+    }
+
+    try {
+        let numericId = id;
+        if (String(id).includes("-")) {
+            numericId = Number(id.split("-").pop());
+        }
+
+        const [[app]] = await pool.query(
+            `SELECT * FROM applications 
+             WHERE id = ? AND (email = ? OR mobile = ?)`,
+            [numericId, identifier, identifier]
+        );
+
+        if (!app) {
+            return res.json({ ok: false, error: "Application not found. Please check your ID and Registered Email/Mobile." });
+        }
+
+        // Fetch Registration Fee Payment
+        const [[regPayment]] = await pool.query(
+            "SELECT * FROM application_payments WHERE application_id=? AND (payment_type IS NULL OR payment_type='registration') ORDER BY id DESC LIMIT 1",
+            [app.id]
+        );
+
+        // Fetch Course Fee Payment
+        const [[coursePayment]] = await pool.query(
+            "SELECT * FROM application_payments WHERE application_id=? AND payment_type='course_fee' ORDER BY id DESC LIMIT 1",
+            [app.id]
+        );
+
+        // Fetch Documents
+        const [[docCount]] = await pool.query(
+            "SELECT count(*) as count FROM application_files WHERE application_id=?",
+            [app.id]
+        );
+
+        // Construct Timeline Data
+        const timeline = {
+            step1: {
+                label: "Application Initiated",
+                status: "completed",
+                date: app.created_at,
+                details: "Application Draft Created"
+            },
+            step2: {
+                label: "Registration Fee",
+                status: regPayment ? (regPayment.status === 'verified' ? 'completed' : 'pending') : 'pending',
+                date: regPayment ? regPayment.uploaded_at : null,
+                details: regPayment ? `UTR: ${regPayment.utr} (${regPayment.status})` : "Payment Pending"
+            },
+            step3: {
+                label: "Application Review",
+                status: app.flow_state === 'submitted' || app.flow_state === 'reviewing' || app.flow_state === 'accepted' ? 'in_progress' : 'pending',
+                date: app.submitted_at,
+                details: "Under Faculty Review"
+            },
+            step4: {
+                label: "Course Fee Payment",
+                status: coursePayment ? (coursePayment.status === 'verified' ? 'completed' : 'pending') : 'pending',
+                date: coursePayment ? coursePayment.uploaded_at : null,
+                details: coursePayment ? `UTR: ${coursePayment.utr}` : "Waiting for Request"
+            },
+            step5: {
+                label: "Document Verification",
+                status: docCount.count > 0 ? 'in_progress' : 'pending',
+                date: null,
+                details: `${docCount.count} Documents Uploaded`
+            }
+        };
+
+        // Final Status Logic
+        if (app.flow_state === 'accepted') {
+            timeline.step3.status = 'completed';
+            timeline.step3.details = "Application Accepted";
+        }
+        if (coursePayment && coursePayment.status === 'verified') {
+            timeline.step4.status = 'completed';
+            timeline.step5.status = 'completed';
+        }
+
+        return res.json({
+            ok: true,
+            app: {
+                fullName: app.fullName,
+                id: prettyId(app.id),
+                email: app.email,
+                mobile: app.mobile,
+                course: "PGCPAITL 2025"
+            },
+            timeline
+        });
+
+    } catch (e) {
+        errorLogger.error("Status check error", e);
+        return res.status(500).json({ ok: false, error: "Server error" });
+    }
+};
+
+exports.checkStatusProV2 = async (req, res) => {
+    const { id, identifier } = req.query;
+
+    if (!id || !identifier) {
+        return res.status(400).json({ ok: false, error: "Missing ID or Identifier" });
+    }
+
+    try {
+        let numericId = id;
+        if (String(id).includes("-")) {
+            numericId = Number(id.split("-").pop());
+        }
+
+        const [[app]] = await pool.query(
+            `SELECT * FROM applications 
+             WHERE id = ? AND (email = ? OR mobile = ?)`,
+            [numericId, identifier, identifier]
+        );
+
+        if (!app) {
+            return res.json({ ok: false, error: "Application not found. Please check your ID and Registered Email/Mobile." });
+        }
+
+        // Fetch Registration Fee Payment
+        const [[regPayment]] = await pool.query(
+            "SELECT * FROM application_payments WHERE application_id=? AND (payment_type IS NULL OR payment_type='registration') ORDER BY id DESC LIMIT 1",
+            [app.id]
+        );
+
+        // Fetch Course Fee Payment
+        const [[coursePayment]] = await pool.query(
+            "SELECT * FROM application_payments WHERE application_id=? AND payment_type='course_fee' ORDER BY id DESC LIMIT 1",
+            [app.id]
+        );
+
+        // Fetch Documents
+        const [[docCount]] = await pool.query(
+            "SELECT count(*) as count FROM application_files WHERE application_id=?",
+            [app.id]
+        );
+
+        // Construct Timeline Data
+        const timeline = {
+            step1: {
+                label: "Application Initiated",
+                status: "completed",
+                date: app.created_at,
+                details: "Application Draft Created"
+            },
+            step2: {
+                label: "Registration Fee",
+                status: regPayment ? (regPayment.status === 'verified' ? 'completed' : 'in_progress') : 'pending',
+                date: regPayment ? regPayment.uploaded_at : null,
+                details: regPayment ? `UTR: ${regPayment.utr} (${regPayment.status === 'verified' ? 'Verified' : 'Verification Pending'})` : "Payment Pending"
+            },
+            step3: {
+                label: "Application Review",
+                status: app.flow_state === 'submitted' || app.flow_state === 'reviewing' || app.flow_state === 'accepted' ? 'in_progress' : 'pending',
+                date: app.submitted_at,
+                details: "Under Faculty Review"
+            },
+            step4: {
+                label: "Course Fee Payment",
+                status: coursePayment ? (coursePayment.status === 'verified' ? 'completed' : 'in_progress') : 'pending',
+                date: coursePayment ? coursePayment.uploaded_at : null,
+                details: coursePayment ? `UTR: ${coursePayment.utr} (${coursePayment.status === 'verified' ? 'Verified' : 'Verification Pending'})` : "Waiting for Request"
+            },
+            step5: {
+                label: "Document Verification",
+                status: docCount.count > 0 ? (coursePayment && coursePayment.status === 'verified' ? 'completed' : 'in_progress') : 'pending',
+                date: null,
+                details: docCount.count > 0 ? `${docCount.count} Documents Uploaded` : "Pending Upload"
+            }
+        };
+
+        // Final Status Logic
+        if (app.flow_state === 'accepted') {
+            timeline.step3.status = 'completed';
+            timeline.step3.details = "Application Accepted";
+        }
+        if (coursePayment && coursePayment.status === 'verified') {
+            timeline.step4.status = 'completed';
+            // If course fee is verified, documents are verified too
+            if (docCount.count > 0) timeline.step5.status = 'completed';
+        }
+
+        return res.json({
+            ok: true,
+            app: {
+                fullName: app.fullName,
+                id: prettyId(app.id),
+                email: app.email,
+                mobile: app.mobile,
+                course: "PGCPAITL 2025"
+            },
+            timeline
+        });
+
+    } catch (e) {
+        errorLogger.error("Status check error", e);
+        return res.status(500).json({ ok: false, error: "Server error" });
+    }
+};

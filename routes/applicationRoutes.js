@@ -18,7 +18,7 @@ router.post(
     ]),
     appController.uploadDocuments
 );
-router.get("/api/application/status", appController.checkStatus);
+router.get("/api/application/status", appController.checkStatusProV2);
 router.get("/api/resolve-id", appController.resolveId);
 router.put("/application/:id/submit", appController.submitApplication);
 
