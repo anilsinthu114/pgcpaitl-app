@@ -59,6 +59,9 @@ function layout(content) {
 
       <div style="border-top:1px solid #e3e6ed;margin:20px 0;"></div>
 
+      <!-- IMPORTANT ANNOUNCEMENT BLOCK -->
+      ${announcementBlock()}
+
       <!-- CONTENT -->
       ${content}
 
@@ -112,6 +115,18 @@ function layout(content) {
 //   </div>
 //   `;
 // }
+
+function announcementBlock() {
+  return `<div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #ffeeba;">
+        <h4 style="margin: 0 0 10px; color: #856404; font-size: 16px;">📢 Important Updates</h4>
+        <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+          <li style="margin-bottom: 5px;"><strong>Registration Fee Deadline:</strong> 15th January 2026</li>
+          <li style="margin-bottom: 5px;"><strong>Course Fee Payment Deadline:</strong> 31st January 2026</li>
+          <li><strong>Course Commencement:</strong> 09 Feburary 2026 (Tentatively)</li>
+        </ul>
+      </div>
+      `
+}
 
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 2: Applicant Submission Acknowledgement
@@ -568,8 +583,12 @@ function adminCourseFeeNotificationMail(app, id) {
 // ------------------------------------------------------------------
 // MAIL SENDER WRAPPER
 // ------------------------------------------------------------------
-async function sendMail(to, subject, html, cc = process.env.EMAIL_TO) {
-  return transporter.sendMail({ from: process.env.EMAIL_FROM, to, cc, subject, html });
+async function sendMail(to, subject, html, cc = process.env.EMAIL_CC || process.env.EMAIL_TO) {
+  const from = process.env.EMAIL_FROM || "applicationspgcpaitl@jntugv.edu.in";
+  if (!from) {
+    console.error("CRITICAL: EMAIL_FROM not defined in env.");
+  }
+  return transporter.sendMail({ from, to, cc, subject, html });
 }
 
 function adminPaymentUploadedEmail(app, paymentId, prettyId, utr) {

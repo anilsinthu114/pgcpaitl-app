@@ -429,8 +429,10 @@ exports.sendBulkMail = async (req, res) => {
         let count = 0;
         // Simple loop (in production, use a queue)
         (async () => {
+            console.log(`[BulkMail] Starting background send for ${recipients.length} recipients...`);
             for (const r of recipients) {
                 try {
+                    console.log(`[BulkMail] Sending to: ${r.email}`);
                     // personalized greeting if possible, or generic
                     const personalizedHtml = Mailer.layout(`
                         <h2 style="color:#003c7a;">Official Notification</h2>
@@ -445,11 +447,14 @@ exports.sendBulkMail = async (req, res) => {
                     `);
 
                     await Mailer.sendMail(r.email, subject, personalizedHtml);
+                    console.log(`[BulkMail] Success: ${r.email}`);
                     count++;
                 } catch (e) {
+                    console.error(`[BulkMail] Failed: ${r.email}`, e.message);
                     errorLogger.error(`Bulk mail failed for ${r.email}`, e);
                 }
             }
+            console.log(`[BulkMail] Finished. Sent: ${count}/${recipients.length}`);
             info(`Bulk mail finished. Sent: ${count}/${recipients.length}`);
         })();
 
@@ -470,13 +475,17 @@ exports.downloadFile = async (req, res) => {
         if (files.length === 0) return res.status(404).send("File not found");
 
         const f = files[0];
-        const projectRoot = path.resolve(__dirname, '..');
-        const absPath = path.isAbsolute(f.stored_path) ? f.stored_path : path.join(projectRoot, f.stored_path);
+        // FIX: Use FILE_BASE provided in env, fallback to project root if not set
+        const basePath = process.env.FILE_BASE || path.resolve(__dirname, '..');
+
+        // If stored_path is already absolute, use it; otherwise join with base
+        const absPath = path.isAbsolute(f.stored_path) ? f.stored_path : path.join(basePath, f.stored_path);
 
         try {
             await fs.access(absPath);
             res.download(absPath, f.original_name);
         } catch {
+            errorLogger.error("File missing on disk", { absPath });
             res.status(404).send("File missing on disk");
         }
     } catch (err) {
@@ -530,6 +539,7 @@ exports.uploadDocuments = async (req, res) => {
         // Save file info
         const files = req.files;
         const fileTypes = ['photo', 'id_proof', 'degree', 'marks', 'other'];
+        let totalFilesUploaded = 0;
 
         // Define mapping for clear DB types
         const typeMapping = {
@@ -567,6 +577,7 @@ exports.uploadDocuments = async (req, res) => {
                             f.size
                         ]
                     );
+                    totalFilesUploaded++; // FIX: Increment counter
                 }
             }
         }
@@ -586,11 +597,13 @@ exports.uploadDocuments = async (req, res) => {
 
                 // Notify Admin: Course Fee & Docs (Consolidated)
                 // We assume if they are uploading docs, they likely just paid the course fee.
-                Mailer.sendMail(
-                    process.env.EMAIL_FROM,
-                    `Action Required: Course Fee & Documents (ID: ${prettyId(numericId)})`,
-                    Mailer.adminCourseFeeAndDocsEmail(appObj, totalFilesUploaded)
-                );
+                if (totalFilesUploaded > 0) { // FIX: Only send if files were actually processed
+                    Mailer.sendMail(
+                        process.env.EMAIL_FROM,
+                        `Action Required: Course Fee & Documents (ID: ${prettyId(numericId)})`,
+                        Mailer.adminCourseFeeAndDocsEmail(appObj, totalFilesUploaded)
+                    );
+                }
             }
         } catch (e) {
             errorLogger.error("Doc upload email error", e);

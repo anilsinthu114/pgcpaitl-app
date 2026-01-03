@@ -545,7 +545,7 @@ async function viewApplication(id) {
            <div style="color:#777; font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;" title="${escapeHtml(f.original_name)}">${escapeHtml(f.original_name)}</div>
         </div>
       </div>
-      <button class="download-btn" data-file="${f.id}" 
+      <button class="download-btn" data-file="${f.id}" data-filename="${escapeHtml(f.original_name)}"
         style="background:#003366; color:white; border:none; padding:8px 12px; border-radius:4px; font-size:0.85rem; cursor:pointer; width:100%; text-align:center; transition:background 0.2s;">
         Download File
       </button>
@@ -557,7 +557,8 @@ async function viewApplication(id) {
   document.querySelectorAll(".download-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const fileId = btn.getAttribute("data-file");
-      downloadFile(fileId);
+      const fileName = btn.getAttribute("data-filename");
+      downloadFile(fileId, fileName);
     });
   });
 
@@ -675,17 +676,30 @@ window.requestCourseFee = async (e, id) => {
 // =====================
 // DOWNLOAD FILE
 // =====================
-async function downloadFile(id) {
-  const res = await fetchWithAuth(`/application/file/${id}`);
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
+async function downloadFile(id, filename) {
+  try {
+    const res = await fetchWithAuth(`/application/file/${id}`);
+    if (!res.ok) throw new Error("Download failed");
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "file";
-  a.click();
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
 
-  URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "download";
+    document.body.appendChild(a); // Append to body to ensure click works in Firefox
+    a.click();
+
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+  } catch (e) {
+    console.error(e);
+    showToast("Error downloading file", "error");
+  }
 }
 
 // =====================

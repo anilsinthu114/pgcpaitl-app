@@ -28,7 +28,7 @@ router.get("/application/:id", adminAuth, appController.getApplicationDetails);
 router.put("/application/:id/status", adminAuth, appController.updateApplicationStatus);
 router.post("/api/admin/application/:id/remind-payment", adminAuth, appController.sendPaymentReminder);
 router.post('/api/admin/application/:id/request-course-fee', adminAuth, appController.requestCourseFee);
-router.post('/admin/applications/bulk-mail', adminAuth, appController.sendBulkMail);
+router.post('/api/admin/applications/bulk-mail', adminAuth, appController.sendBulkMail);
 router.get("/application/file/:id", adminAuth, appController.downloadFile);
 
 module.exports = router;

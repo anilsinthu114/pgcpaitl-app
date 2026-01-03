@@ -41,10 +41,30 @@ async function loadFiles() {
         <td>${f.application_id}</td>
         <td>${f.type}</td>
         <td>${f.original_name}</td>
-        <td><a href="/download/${f.id}" target="_blank">Download</a></td>
+        <td><a href="javascript:void(0)" onclick="downloadFile('${f.id}', '${f.original_name}')">Download</a></td>
       </tr>`;
   });
 
   html += `</tbody></table>`;
   root.innerHTML = html;
+}
+
+async function downloadFile(id, filename) {
+  try {
+    const res = await auth(`/application/file/${id}`);
+    if (!res.ok) throw new Error("Download failed");
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename; // Use correct filename
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  } catch (err) {
+    console.error(err);
+    alert("Error downloading file");
+  }
 }
