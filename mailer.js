@@ -656,9 +656,9 @@ function adminPaymentUploadedEmail(app, paymentId, prettyId, utr) {
     <div style=
 
     <div style="text-align:center; margin-top:25px;">
-      <a href="https://application.pgcpaitl.jntugv.edu.in/admin/dashboard" 
+      <a href="https://application.pgcpaitl.jntugv.edu.in/admin/dashboard.html" 
          style="background-color:#003c7a; color:#fff; padding:12px 24px; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-block;">
-        Login to Dashboard
+        Login to Dashboard to Verify Payment
       </a>
     </div>
 
