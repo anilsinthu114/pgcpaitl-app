@@ -103,6 +103,94 @@ exports.createDraft = async (req, res) => {
         debug("Connection released");
     }
 };
+exports.submitApplication = async (req, res) => {
+    const id = Number(req.params.id);
+    debug("Application submit request received", req.params);
+    const conn = await pool.getConnection();
+
+    try {
+        debug("Beginning transaction");
+        await conn.beginTransaction();
+
+        // 1. Check for VERIFIED payment
+        const [payments] = await conn.query(
+            "SELECT id, status FROM application_payments WHERE application_id=? AND status='verified'",
+            [id]
+        );
+
+        const isPaid = payments.length > 0;
+
+        let newStatus = 'accepted';
+        let flowState = 'accepted';
+
+        if (!isPaid) {
+            warn("Submission attempted without verified payment", { id });
+            newStatus = 'pending';
+            flowState = 'pending';
+        }
+
+        // 2. Update Application Status
+        debug(`Updating status to ${newStatus}`, { id });
+        await conn.query(
+            "UPDATE applications SET flow_state=?, status=? WHERE id=?",
+            [flowState, newStatus, id]
+        );
+
+        // 3. Commit Transaction
+        await conn.commit();
+
+        // 4. Send appropriate email
+        const [[appObj]] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
+        const pid = prettyId(id);
+
+        if (isPaid) {
+            debug("Payment verified, sending submission success email");
+            // Notify Applicant (NEW)
+            try {
+                Mailer.sendMail(
+                    appObj.email,
+                    `PGCPAITL Application Submitted & Verified – ID ${pid}`,
+                    Mailer.applicationVerifiedSuccessEmail(appObj, pid)
+                );
+            } catch (e) {
+                errorLogger.error("Applicant success mail error", e);
+            }
+            // Standard submission email
+            try {
+                Mailer.sendMail(
+                    process.env.ADMIN_EMAIL,
+                    `New PGCPAITL Application Submitted – ID ${pid}`,
+                    Mailer.adminNotificationEmail(appObj, pid)
+                );
+            } catch (e) { errorLogger.error("Admin mail error", e); }
+
+        } else {
+            debug("Payment NOT verified, sending payment pending email");
+            try {
+                Mailer.sendMail(
+                    appObj.email,
+                    `PGCPAITL – Action Required: Payment Pending (ID: ${pid})`,
+                    Mailer.paymentPendingEmail(appObj, pid)
+                );
+            } catch (e) { errorLogger.error("Payment pending mail error", e); }
+
+            return res.json({
+                ok: true,
+                warning: "pending",
+                message: "Application submitted but awaiting payment verification."
+            });
+        }
+
+        res.json({ ok: true });
+
+    } catch (err) {
+        await conn.rollback();
+        error("Error submitting application", err);
+        res.status(500).json({ ok: false, error: err.message });
+    } finally {
+        conn.release();
+    }
+};
 
 exports.checkStatus = async (req, res) => {
     const { id, identifier } = req.query; // identifier = email or mobile
@@ -144,94 +232,6 @@ exports.resolveId = (req, res) => {
     res.json({ ok: true, id });
 };
 
-exports.submitApplication = async (req, res) => {
-    const id = Number(req.params.id);
-    debug("Application submit request received", req.params);
-    const conn = await pool.getConnection();
-
-    try {
-        debug("Beginning transaction");
-        await conn.beginTransaction();
-
-        // 1. Check for VERIFIED payment
-        const [payments] = await conn.query(
-            "SELECT id, status FROM application_payments WHERE application_id=? AND status='verified'",
-            [id]
-        );
-
-        const isPaid = payments.length > 0;
-
-        let newStatus = 'submitted';
-        let flowState = 'submitted';
-
-        if (!isPaid) {
-            warn("Submission attempted without verified payment", { id });
-            newStatus = 'pending';
-            flowState = 'pending';
-        }
-
-        // 2. Update Application Status
-        debug(`Updating status to ${newStatus}`, { id });
-        await conn.query(
-            "UPDATE applications SET flow_state=?, status=? WHERE id=?",
-            [flowState, newStatus, id]
-        );
-
-        // 3. Commit Transaction
-        await conn.commit();
-
-        // 4. Send appropriate email
-        const [[appObj]] = await pool.query("SELECT * FROM applications WHERE id=?", [id]);
-        const pid = prettyId(id);
-
-        if (isPaid) {
-            debug("Payment verified, sending submission success email");
-
-            // Notify Applicant (NEW)
-            try {
-                Mailer.sendMail(
-                    appObj.email,
-                    `PGCPAITL Application Submitted & Verified – ID ${pid}`,
-                    Mailer.applicationVerifiedSuccessEmail(appObj, pid)
-                );
-            } catch (e) { errorLogger.error("Applicant success mail error", e); }
-
-            // Standard submission email
-            try {
-                Mailer.sendMail(
-                    process.env.EMAIL_FROM,
-                    `New PGCPAITL Application Submitted – ID ${pid}`,
-                    Mailer.adminNotificationEmail(appObj, pid)
-                );
-            } catch (e) { errorLogger.error("Admin mail error", e); }
-
-        } else {
-            debug("Payment NOT verified, sending payment pending email");
-            try {
-                Mailer.sendMail(
-                    appObj.email,
-                    `PGCPAITL – Action Required: Payment Pending (ID: ${pid})`,
-                    Mailer.paymentPendingEmail(appObj, pid)
-                );
-            } catch (e) { errorLogger.error("Payment pending mail error", e); }
-
-            return res.json({
-                ok: true,
-                warning: "pending",
-                message: "Application submitted but awaiting payment verification."
-            });
-        }
-
-        res.json({ ok: true });
-
-    } catch (err) {
-        await conn.rollback();
-        error("Error submitting application", err);
-        res.status(500).json({ ok: false, error: err.message });
-    } finally {
-        conn.release();
-    }
-};
 
 // Admin: List Applications
 exports.listApplications = async (_, res) => {

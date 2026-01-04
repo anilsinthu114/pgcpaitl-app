@@ -4,7 +4,21 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    console.log("Submit triggered.");
+    // 1. Get Buttons
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const prevBtns = document.querySelectorAll('.step-btn'); // Select all nav buttons
+
+    // 2. Disable UI
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.dataset.originalText = submitBtn.innerText;
+      submitBtn.innerText = "Submitting...";
+      submitBtn.style.opacity = "0.7";
+      submitBtn.style.cursor = "wait";
+    }
+    prevBtns.forEach(btn => btn.disabled = true);
+
+    console.log("Submit triggered. Buttons disabled.");
 
     const fd = new FormData(form);
     console.log("FormData prepared:", fd);
@@ -47,11 +61,23 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Application Error:", j.error);
         const friendlyMsg = getFriendlyErrorMessage(j.error);
         showToast(friendlyMsg, "error");
+        resetButtons(); // Re-enable on application error
       }
     } catch (err) {
       console.error("Network or Unexpected Error:", err);
       const friendlyMsg = getFriendlyErrorMessage(err.message || "Network Error");
       showToast(friendlyMsg, "error");
+      resetButtons(); // Re-enable on network error
+    }
+
+    function resetButtons() {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = submitBtn.dataset.originalText || "Submit Application";
+        submitBtn.style.opacity = "1";
+        submitBtn.style.cursor = "pointer";
+      }
+      prevBtns.forEach(btn => btn.disabled = false);
     }
   });
 });

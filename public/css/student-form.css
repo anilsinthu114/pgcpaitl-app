@@ -585,3 +585,19 @@
             margin-bottom: 8px;
         }
     }
+
+    /* Action Buttons in Success Page */
+    .action-buttons .btn-dashboard {
+        text-decoration: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-buttons .btn-dashboard:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }

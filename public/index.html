@@ -8,9 +8,10 @@
 
   <!-- NO INLINE JS (CSP SAFE) -->
   <!-- CSP Safe: External CSS -->
-  <link rel="stylesheet" href="/css/student-form.css">
-  <link rel="stylesheet" href="/css/toast.css">
-
+</head>
+<link rel="stylesheet" href="/css/student-form.css">
+<link rel="stylesheet" href="/css/toast.css">
+<link rel="stylesheet" href="/css/modern-ui.css"> <!-- New UI Styles -->
 </head>
 
 <body>
@@ -47,63 +48,47 @@
 
       </header>
 
-      <!-- NEW: MARQUEE ANNOUNCEMENT (FULL WIDTH) -->
-      <div style="color: #856404; padding: 10px 0; border-bottom: 1px solid #ffeeba; width: 100%;">
-        <marquee behavior="scroll" direction="left" style="font-weight: 600; font-size: 15px;">
-          📢 IMPORTANT: Application Registration Fee ends on 15th January 2026. &nbsp;&nbsp;|&nbsp;&nbsp;
-          Course Fee Payment ends on 31st January 2026. &nbsp;&nbsp;|&nbsp;&nbsp;
-          Class Work Commencement is postponed to 09 February 2026 as Tenatively.
-        </marquee>
-      </div>
-      <script src="/marquee-handler.js" defer></script>
-      <!-- BEGIN: IMPROVED IMPORTANT INFORMATION BANNER -->
-      <!-- <div class="info-banner enhanced-banner">
-        <div class="banner-icon">
-          ⚠️
+      <!-- NEW: MODERN MARQUEE -->
+      <div class="marquee-container">
+        <div class="marquee-content">
+          📢 IMPORTANT: Application Registration Fee ends on 25th January 2026. <span class="marquee-separator">|</span>
+          Course Fee Payment ends on 31st January 2026. <span class="marquee-separator">|</span>
+          Class Work Commencement is postponed to 09 February 2026 (Tentatively).
         </div>
+      </div>
 
-        <div class="banner-content">
-          <div class="banner-title">Important Information for Applicants</div>
-
-          <ul class="banner-points">
-            <li>Applicants may submit the online application form through the portal at present.</li>
-            <li>The ₹1,000/- non-refundable registration fee payment link will be activated shortly on the same portal.
-            </li>
-            <li>You will receive an automatic Email/SMS notification once the payment gateway is live.</li>
-            <li>All applications shall remain <strong>provisional</strong> until successful payment of the registration
-              fee.</li>
-            <li>The registration fee is strictly non-refundable.</li>
-          </ul>
-
-          <div class="banner-footer">
-            For official updates, visit:
-            <a href="https://pgcpaitl.jntugv.edu.in" target="_blank" rel="noopener noreferrer">
-              pgcpaitl.jntugv.edu.in
-            </a>
+      <!-- NEW: MODERN INFO GRID -->
+      <div class="modern-info-grid">
+        <!-- Item 1: Reg Fee Deadline -->
+        <div class="modern-info-card card-alert">
+          <div class="card-icon">📅</div>
+          <div class="card-info">
+            <span class="card-label">Reg. Fee Deadline</span>
+            <span class="card-value" style="color:#c0392b;">25 Jan 2026</span>
+            <span class="card-value">₹ 1,000 (Non-Refundable)</span>
           </div>
         </div>
-      </div> -->
-      <!-- END: IMPROVED IMPORTANT INFORMATION BANNER -->
 
+        <!-- Item 2: Course Fee Deadline -->
+        <div class="modern-info-card card-alert">
+          <div class="card-icon">💸</div>
+          <div class="card-info">
+            <span class="card-label">Course Fee Deadline</span>
+            <span class="card-value" style="color:#c0392b;">31 Jan 2026</span>
+            <span class="card-value">₹ 30,000</span>
+          </div>
+        </div>
 
-      <div class="info-banner">
-        <div class="info-item">
-          <span class="info-label">Registration Fee Deadline</span>
-          <span style="color: #d9534f; font-weight: bold;">15 January 2026</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Course Fee Deadline</span>
-          <span style="color: #d9534f; font-weight: bold;">31 January 2026</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Course Commencement</span>
-          <span style="font-weight: bold;">09 February 2026 (Tenatively)</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Programme Fee</span>
-          <span>₹ 30,000</span>
+        <!-- Item 3: Commencement -->
+        <div class="modern-info-card">
+          <div class="card-icon">🚀</div>
+          <div class="card-info">
+            <span class="card-label">Commencement</span>
+            <span class="card-value">09 Feb 2026</span>
+          </div>
         </div>
       </div>
+
 
       <!-- Progress Bar -->
       <div class="progress-container">

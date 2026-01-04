@@ -120,7 +120,7 @@ function announcementBlock() {
   return `<div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #ffeeba;">
         <h4 style="margin: 0 0 10px; color: #856404; font-size: 16px;">📢 Important Updates</h4>
         <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-          <li style="margin-bottom: 5px;"><strong>Registration Fee Deadline:</strong> 15th January 2026</li>
+          <li style="margin-bottom: 5px;"><strong>Registration Fee Deadline:</strong> 25th January 2026</li>
           <li style="margin-bottom: 5px;"><strong>Course Fee Payment Deadline:</strong> 31st January 2026</li>
           <li><strong>Course Commencement:</strong> 09 Feburary 2026 (Tentatively)</li>
         </ul>
@@ -242,23 +242,36 @@ function statusUpdateEmail(app, status) {
 // EMAIL TEMPLATE 6: Payment Received Acknowledgement
 // ------------------------------------------------------------------
 
-function paymentReceivedEmail(appObj, paymentId, prettyId, utr) {
+function paymentReceivedEmail(appObj, paymentId, prettyId, utr, amount, paymentType) {
+  const isCourseFee = paymentType === 'course_fee';
+  const title = isCourseFee ? "Course Fee Payment Received" : "Application Registered and Payment Received";
+  const pTypeLabel = isCourseFee ? 'Course Fee' : 'Registration Fee';
+  const displayAmount = amount ? `₹${Number(amount).toLocaleString('en-IN')}` : '';
+
   return layout(`
-    <h2 style="color:#004c97; margin-top:0;">Payment Submission Received</h2>
+    <h2 style="color:#004c97; margin-top:0;">${title}</h2>
 
     <p>Dear <strong>${escapeHtml(appObj.fullName)}</strong>,</p>
 
     <p>
-      We acknowledge the receipt of your <strong>payment proof submission</strong> 
-      for your application to the 
-      <strong>PG Certificate Programme in Artificial Intelligence, Technology & Law (PGCPAITL)</strong>.
+      We acknowledge the receipt of your <strong>${pTypeLabel} payment proof submission</strong> 
+      for the <strong>PG Certificate Programme in Artificial Intelligence, Technology & Law (PGCPAITL)</strong>.
     </p>
 
     <div style="background:#f8fbff; border:1px solid #dce6f5; padding:15px; border-radius:8px; margin-top:15px;">
+      <h3 style="margin-top:0; color:#003c7a; font-size:16px; border-bottom:1px solid #dce6f5; padding-bottom:8px;">Payment Details</h3>
       <table cellpadding="6" style="font-size:14px; color:#333; width:100%;">
         <tr>
           <td style="width:140px; font-weight:bold;">Application ID:</td>
           <td>${prettyId}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;">Payment Type:</td>
+          <td>${pTypeLabel}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:bold;">Amount:</td>
+          <td>${displayAmount}</td>
         </tr>
         <tr>
           <td style="font-weight:bold;">Payment ID:</td>
@@ -272,6 +285,18 @@ function paymentReceivedEmail(appObj, paymentId, prettyId, utr) {
           <td style="font-weight:bold;">Submission Time:</td>
           <td>${new Date().toLocaleString("en-IN")}</td>
         </tr>
+      </table>
+    </div>
+
+    <div style="background:#fff; border:1px solid #eee; padding:15px; border-radius:8px; margin-top:15px;">
+      <h3 style="margin-top:0; color:#003c7a; font-size:16px; border-bottom:1px solid #eee; padding-bottom:8px;">Application Details</h3>
+      <table cellpadding="6" style="font-size:14px; color:#333; width:100%;">
+        <tr><td style="width:140px; font-weight:bold;">Full Name:</td><td>${escapeHtml(appObj.fullName)}</td></tr>
+        <tr><td style="font-weight:bold;">Parent Name:</td><td>${escapeHtml(appObj.parentName)}</td></tr>
+        <tr><td style="font-weight:bold;">Email:</td><td>${escapeHtml(appObj.email)}</td></tr>
+        <tr><td style="font-weight:bold;">Mobile:</td><td>${escapeHtml(appObj.mobile)}</td></tr>
+        <tr><td style="font-weight:bold;">Degree/Qual:</td><td>${escapeHtml(appObj.degreeLevel)}</td></tr>
+        <tr><td style="font-weight:bold;">University:</td><td>${escapeHtml(appObj.university)}</td></tr>
       </table>
     </div>
 
@@ -296,7 +321,10 @@ function paymentReceivedEmail(appObj, paymentId, prettyId, utr) {
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 7a: Payment Verified
 // ------------------------------------------------------------------
-function paymentVerifiedEmail(app, prettyId) {
+function paymentVerifiedEmail(app, prettyId, amount, paymentType) {
+  const pTypeLabel = paymentType === 'course_fee' ? 'Course Fee' : 'Registration Fee';
+  const displayAmount = amount ? `₹${Number(amount).toLocaleString('en-IN')}` : 'Paid';
+
   return layout(`
     <h2 style="color:#1b7a1b; margin-top:0;">Payment Successfully Verified</h2>
 
@@ -311,9 +339,10 @@ function paymentVerifiedEmail(app, prettyId) {
     <p><b>Application ID:</b> ${prettyId}</p>
 
     <div style="background:#e8f5e9; border:1px solid #c3e6cb; border-radius:6px; padding:15px; margin:20px 0;">
-      <p style="margin:0; color:#155724;">
-        ✅ <strong>Status Verified</strong><br>
-        Your application will now proceed to the next stage of admission processing.
+      <p style="margin:0; color:#155724; line-height:1.6;">
+        ✅ <strong>Payment Verified</strong><br>
+        <strong>${pTypeLabel}:</strong> ${displayAmount}<br>
+        <span style="font-size:13px;">Your application will now proceed to the next stage.</span>
       </p>
     </div>
 
@@ -333,7 +362,10 @@ function paymentVerifiedEmail(app, prettyId) {
 // ------------------------------------------------------------------
 // EMAIL TEMPLATE 7b: Payment Rejected
 // ------------------------------------------------------------------
-function paymentRejectedEmail(app, prettyId) {
+function paymentRejectedEmail(app, prettyId, amount, paymentType) {
+  const pTypeLabel = paymentType === 'course_fee' ? 'Course Fee' : 'Registration Fee';
+  const displayAmount = amount ? `₹${Number(amount).toLocaleString('en-IN')}` : 'N/A';
+
   return layout(`
     <h2 style="color:#b00020; margin-top:0;">Payment Verification Failed</h2>
 
@@ -347,17 +379,16 @@ function paymentRejectedEmail(app, prettyId) {
     <p><b>Application ID:</b> ${prettyId}</p>
 
     <div style="background:#fdecea; border:1px solid #f5c6cb; border-radius:6px; padding:15px; margin:20px 0;">
-      <p style="margin:0; color:#721c24;">
-        ❌ <strong>Action Required</strong><br>
-        Please re-upload a clear payment proof (UTR screenshot) ensuring the UTR number is visible and matches your transaction.
+      <p style="margin:0; color:#721c24; line-height:1.6;">
+        ❌ <strong>Verification Failed</strong><br>
+        <strong>${pTypeLabel}:</strong> ${displayAmount}<br>
+        Please re-upload a clear payment proof (UTR screenshot) ensuring the UTR number is visible.
       </p>
     </div>
 
     <p>
       You can re-upload your proof using the payment link 
       <a href= "https://application.pgcpaitl.jntugv.edu.in/payment.html/?id=${prettyId}">Proceed to Re-upload</a>
-      <br/>
-      If you believe this is an error, please contact us with supporting documents.
     </p>
 
     <p style="margin-top:20px;">
@@ -583,7 +614,7 @@ function adminCourseFeeNotificationMail(app, id) {
 // ------------------------------------------------------------------
 // MAIL SENDER WRAPPER
 // ------------------------------------------------------------------
-async function sendMail(to, subject, html, cc = process.env.EMAIL_CC || process.env.EMAIL_TO) {
+async function sendMail(to, subject, html, cc = process.env.EMAIL_CC || process.env.ADMIN_EMAIL) {
   const from = process.env.EMAIL_FROM || "applicationspgcpaitl@jntugv.edu.in";
   if (!from) {
     console.error("CRITICAL: EMAIL_FROM not defined in env.");

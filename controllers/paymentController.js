@@ -23,7 +23,7 @@ exports.submitPayment = async (req, res) => {
         await conn.beginTransaction();
 
         const [[appRow]] = await conn.query(
-            "SELECT id,email,fullName FROM applications WHERE id=?",
+            "SELECT * FROM applications WHERE id=?",
             [numericId]
         );
         if (!appRow) throw new Error("Invalid application");
@@ -52,8 +52,8 @@ exports.submitPayment = async (req, res) => {
             // For now, consistent with user request "add payment done status if any duplicates", we just return OK.
 
             let redirectUrl = null;
+            const pid = prettyId(numericId); // Ensure PID is available
             if (req.body.payment_type === 'course_fee' || (Array.isArray(req.body.payment_type) && req.body.payment_type[0] === 'course_fee')) {
-                const pid = prettyId(numericId);
                 redirectUrl = `/upload-documents.html?id=${pid}`;
             }
 
@@ -79,6 +79,8 @@ exports.submitPayment = async (req, res) => {
         const paymentId = `PGCPAITL-Pay-${String(r.insertId).padStart(6, "0")}`;
         debug("Payment submission created", r.insertId);
         debug("Payment submission created", { application_id, utr, screenshotPath });
+
+        // Update Application Status for Registration Fee
         if (!req.body.payment_type || req.body.payment_type === 'registration') {
             await conn.query(
                 "UPDATE applications SET status='submitted', flow_state='submitted', submitted_at=NOW() WHERE id=? AND status='draft'",
@@ -99,7 +101,9 @@ exports.submitPayment = async (req, res) => {
                 appRow,
                 paymentId,
                 prettyId(numericId),
-                utr
+                utr,
+                finalAmount,
+                paymentType
             )
         );
         debug("Payment received email sent");
@@ -108,26 +112,38 @@ exports.submitPayment = async (req, res) => {
         const pType = Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration');
 
         if (pType !== 'course_fee') {
+            // 1. Send Payment Uploaded Notification
             try {
                 Mailer.sendMail(
-                    process.env.EMAIL_FROM,
+                    process.env.ADMIN_EMAIL,
                     `Action Required: New Payment Uploaded (ID: ${paymentId})`,
                     Mailer.adminPaymentUploadedEmail(appRow, paymentId, prettyId(numericId), utr)
                 );
             } catch (e) { errorLogger.error("Admin payment mail error", e); }
+
+            try {
+                Mailer.sendMail(
+                    process.env.ADMIN_EMAIL,
+                    `New PGCPAITL Application Submitted – ID ${prettyId(numericId)}`,
+                    Mailer.adminNotificationEmail(appRow, prettyId(numericId))
+                );
+            } catch (e) { errorLogger.error("Admin submission mail error", e); }
         }
 
         paymentLogger.info("Payment uploaded", { application_id });
         debug("Payment uploaded", { application_id });
 
         let redirectUrl = null;
+        const pid = prettyId(numericId); // Ensure PID is available
         if (req.body.payment_type === 'course_fee' || (Array.isArray(req.body.payment_type) && req.body.payment_type[0] === 'course_fee')) {
             // Logic to redirect
-            const pid = prettyId(numericId);
             redirectUrl = `/upload-documents.html?id=${pid}`;
+        } else {
+            // Registration Fee Success Redirect
+            redirectUrl = `/payment-success.html?id=${pid}`;
         }
 
-        res.json({ ok: true, message: "Payment submitted", redirect: redirectUrl });
+        res.json({ ok: true, message: "Payment submitted", redirect: redirectUrl, application_id: pid });
 
     } catch (err) {
         await conn.rollback();
@@ -157,9 +173,9 @@ exports.verifyPayment = async (req, res) => {
         );
         debug("Payment status updated to verified", { id });
 
-        debug("Fetching payment application ID", { id });
+        debug("Fetching payment details", { id });
         const [[p]] = await conn.query(
-            "SELECT application_id FROM application_payments WHERE id=?",
+            "SELECT application_id, amount, payment_type FROM application_payments WHERE id=?",
             [id]
         );
         debug("Payment application ID fetched", { application_id: p.application_id });
@@ -182,7 +198,7 @@ exports.verifyPayment = async (req, res) => {
             Mailer.sendMail(
                 appInfo.email,
                 `PGCPAITL – Payment Verified (ID: ${pid})`,
-                Mailer.paymentVerifiedEmail(appInfo, pid)
+                Mailer.paymentVerifiedEmail(appInfo, pid, p.amount, p.payment_type)
             );
         }
         debug("Payment status update email sent", { application_id: p.application_id });
@@ -222,7 +238,7 @@ exports.rejectPayment = async (req, res) => {
                 Mailer.sendMail(
                     apps[0].email,
                     `PGCPAITL – Payment Rejected (ID: ${pid})`,
-                    Mailer.paymentRejectedEmail(apps[0], pid)
+                    Mailer.paymentRejectedEmail(apps[0], pid, payment.amount, payment.payment_type)
                 );
             } catch (e) { warn("Failed to send rejection mail", e); }
         }

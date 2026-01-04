@@ -6,11 +6,6 @@
     "auditLog": "E:\\Anil\\pgcpaitl-app\\logs\\.3bb26ba4eef53a67061803018c36ba4266ac17ab-audit.json",
     "files": [
         {
-            "date": 1764950637789,
-            "name": "E:\\Anil\\pgcpaitl-app\\logs\\app-2025-12-05.log",
-            "hash": "6d442894b20c79c8bf7dd645907a394767eb4d18a3d7403d5ff6b22a727a4275"
-        },
-        {
             "date": 1765650936909,
             "name": "E:\\Anil\\pgcpaitl-app\\logs\\app-2025-12-14.log",
             "hash": "95adf0c206aee19b6ee93f9ab66c5e5ef9c0672f361ebe767bb2d908a5bf1881"
@@ -44,6 +39,16 @@
             "date": 1767457481119,
             "name": "E:\\Anil\\pgcpaitl-app\\logs\\app-2026-01-03.log",
             "hash": "a5519bd6f50ff9f9b882b739b031d995b729ab2b4bd9b80bdbf4b8d1db1bfa81"
+        },
+        {
+            "date": 1767530861445,
+            "name": "E:\\Anil\\pgcpaitl-app\\logs\\app-2026-01-04.log",
+            "hash": "6fdf6832861eb1772f23c3e191430c1e4b4fa532285e7d15571715e9f8a64ab2"
+        },
+        {
+            "date": 1767551981075,
+            "name": "E:\\Anil\\pgcpaitl-app\\logs\\app-2026-01-05.log",
+            "hash": "6a9726adf60c8bb666aa51ac48f5bb596f6056eca7414573e878f55ee09b3599"
         }
     ],
     "hashType": "sha256"

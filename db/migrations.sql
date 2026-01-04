@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS `pgcpatil-app` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `pgcpatil-app`;
+CREATE DATABASE IF NOT EXISTS `pgcpaitl-app` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `pgcpaitl-app`;
 
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS applications (
   country VARCHAR(100) NOT NULL,
   degreeLevel VARCHAR(100) NOT NULL,
   specialization VARCHAR(255) NOT NULL,
-  instituteName VARCHAR(255) NOT NULL,
+  institutionName VARCHAR(255) NOT NULL,
   university VARCHAR(255) NOT NULL,
   passingYear VARCHAR(10) NOT NULL,
   studyMode VARCHAR(50) NOT NULL,
@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS applications (
   sop TEXT ,
   commMode VARCHAR(255),
   declarations JSON,
-  flow_state ENUM('draft','submitted','reviewing','accepted','rejected') DEFAULT 'draft', 
+  flow_state ENUM('draft','payment_pending','submitted','payment_verified','reviewing','accepted','rejected') DEFAULT 'draft', 
   is_legacy BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  status ENUM('submitted','reviewing','accepted','rejected') DEFAULT 'submitted'
+  status ENUM('pending','submitted','reviewing','accepted','rejected') DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS application_files (

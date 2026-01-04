@@ -113,8 +113,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         });
 
+        const safeId = encodeURIComponent(prettyId || hiddenId.value || 'APP');
         setTimeout(() => {
-          window.location.href = j.redirect || "/payment-success.html";
+          // Redirect to success page WITH ID for button usage
+          const baseRedirect = j.redirect ? j.redirect.split('?')[0] : "/payment-success.html";
+          window.location.href = baseRedirect + "?id=" + safeId;
         }, 900);
 
       } else {
