@@ -83,9 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const steps = [
             timeline.step1,
             timeline.step2,
-            timeline.step3,
             timeline.step4,
-            timeline.step5
+            timeline.step5,
+            timeline.step3
         ];
 
         steps.forEach((step, index) => {

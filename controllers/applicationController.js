@@ -293,7 +293,7 @@ exports.getApplicationDetails = async (req, res) => {
     }
 };
 
-// Admin: Update Status
+// ADMIN: Update Status
 exports.updateApplicationStatus = async (req, res) => {
     const id = Number(req.params.id);
     const { status } = req.body;
@@ -309,7 +309,8 @@ exports.updateApplicationStatus = async (req, res) => {
         if (apps.length === 0) return res.status(404).json({ ok: false, error: "not found" });
         const appObj = apps[0];
 
-        await pool.query("UPDATE applications SET status=? WHERE id=?", [status, id]);
+        // Sync flow_state with status
+        await pool.query("UPDATE applications SET status=?, flow_state=? WHERE id=?", [status, status, id]);
 
         try {
             Mailer.sendMail(
@@ -534,6 +535,20 @@ exports.uploadDocuments = async (req, res) => {
             return res.status(404).json({ ok: false, error: "Application record not found. Please contact support." });
         }
 
+        // SECURITY: Check if Course Fee is Paid & Verified
+        const [[courseFee]] = await conn.query(
+            "SELECT status FROM application_payments WHERE application_id=? AND payment_type='course_fee' ORDER BY id DESC LIMIT 1",
+            [numericId]
+        );
+
+        if (!courseFee || courseFee.status !== 'verified') {
+            await conn.rollback();
+            return res.status(403).json({
+                ok: false,
+                error: "Documents cannot be uploaded until the Course Fee payment is verified."
+            });
+        }
+
         await conn.beginTransaction();
 
         // Save file info
@@ -727,21 +742,27 @@ exports.checkStatusPro = async (req, res) => {
             },
             step3: {
                 label: "Application Review",
-                status: app.flow_state === 'submitted' || app.flow_state === 'reviewing' || app.flow_state === 'accepted' ? 'in_progress' : 'pending',
+                status: (app.flow_state === 'accepted' || app.status === 'accepted') ? 'completed' : (['submitted', 'payment_verified', 'reviewing'].includes(app.flow_state) ? 'in_progress' : 'pending'),
                 date: app.submitted_at,
-                details: "Under Faculty Review"
+                details: (app.flow_state === 'accepted' || app.status === 'accepted') ? "Application Accepted" : "Under Faculty Review"
             },
             step4: {
                 label: "Course Fee Payment",
                 status: coursePayment ? (coursePayment.status === 'verified' ? 'completed' : 'pending') : 'pending',
                 date: coursePayment ? coursePayment.uploaded_at : null,
-                details: coursePayment ? `UTR: ${coursePayment.utr}` : "Waiting for Request"
+                details: coursePayment ? `UTR: ${coursePayment.utr}` : "Payment Pending"
             },
             step5: {
                 label: "Document Verification",
                 status: docCount.count > 0 ? 'in_progress' : 'pending',
                 date: null,
-                details: `${docCount.count} Documents Uploaded`
+                details: docCount.count > 0 ? `${docCount.count} Documents Uploaded` : "Pending Upload"
+            },
+            step6: {
+                label: "Final Status",
+                status: app.flow_state === 'accepted' ? 'completed' : 'pending',
+                date: app.accepted_at,
+                details: app.flow_state === 'accepted' ? "Application Accepted" : "Pending"
             }
         };
 
