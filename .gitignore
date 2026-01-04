@@ -130,3 +130,7 @@ Thumbs.db
 # Editors
 .idea/
 .vscode/
+
+# Application Data
+payments/
+applications/
