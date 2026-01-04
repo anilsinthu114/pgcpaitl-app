@@ -288,6 +288,7 @@ function paymentReceivedEmail(appObj, paymentId, prettyId, utr, amount, paymentT
       </table>
     </div>
 
+    ${!isCourseFee ? `
     <div style="background:#fff; border:1px solid #eee; padding:15px; border-radius:8px; margin-top:15px;">
       <h3 style="margin-top:0; color:#003c7a; font-size:16px; border-bottom:1px solid #eee; padding-bottom:8px;">Application Details</h3>
       <table cellpadding="6" style="font-size:14px; color:#333; width:100%;">
@@ -298,7 +299,7 @@ function paymentReceivedEmail(appObj, paymentId, prettyId, utr, amount, paymentT
         <tr><td style="font-weight:bold;">Degree/Qual:</td><td>${escapeHtml(appObj.degreeLevel)}</td></tr>
         <tr><td style="font-weight:bold;">University:</td><td>${escapeHtml(appObj.university)}</td></tr>
       </table>
-    </div>
+    </div>` : ''}
 
     <p style="margin-top:20px;">
       <strong>Your payment is currently under verification</strong> by the Admissions Team.
