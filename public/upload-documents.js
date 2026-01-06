@@ -31,9 +31,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Error resolving ID", err);
     }
 
-    // ---------------------------------------------
-    // Handle Form Submission
-    // ---------------------------------------------
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         msg.textContent = "Uploading files, please wait...";

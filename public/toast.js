@@ -54,3 +54,4 @@ function showToast(message, type = "info", duration = 4000) {
 
 // Expose globally if needed, though strictly not necessary if included as script
 window.showToast = showToast;
+window.toast = showToast;

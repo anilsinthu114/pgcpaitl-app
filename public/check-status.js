@@ -79,20 +79,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
         container.innerHTML = "";
 
-        // Convert object to array for easier iteration
         const steps = [
-            timeline.step1,
-            timeline.step2,
-            timeline.step4,
-            timeline.step5,
-            timeline.step3
+            { key: 'step1', data: timeline.step1 },
+            { key: 'step2', data: timeline.step2 },
+            { key: 'step4', data: timeline.step4 },
+            { key: 'step5', data: timeline.step5 },
+            { key: 'step3', data: timeline.step3 }
         ];
 
-        steps.forEach((step, index) => {
+        steps.forEach((item) => {
+            const step = item.data;
+            const key = item.key;
+
             if (!step) return;
 
-            const item = document.createElement("div");
-            item.className = `timeline-item ${step.status}`;
+            const div = document.createElement("div");
+            div.className = `timeline-item ${step.status}`;
 
             // Icon
             let icon = "⚪"; // pending
@@ -102,11 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // Custom status text for in_progress
             let extraStatus = "";
             if (step.status === 'in_progress' && !step.details.toLowerCase().includes('verified')) {
-                if (index === 1 || index === 3) extraStatus = `<div style="color:#d35400; font-size:0.85rem; margin-top:5px;">Verification Pending</div>`;
-                if (index === 4) extraStatus = `<div style="color:#2980b9; font-size:0.85rem; margin-top:5px;">Documents Received</div>`;
+                // Determine status message based on key
+                if (key === 'step2' || key === 'step5') extraStatus = `<div style="color:#d35400; font-size:0.85rem; margin-top:5px;">Verification Pending</div>`;
+                if (key === 'step3') extraStatus = `<div style="color:#2980b9; font-size:0.85rem; margin-top:5px;">Documents Received</div>`;
             }
 
-            item.innerHTML = `
+            div.innerHTML = `
                 <div class="time-icon">${icon}</div>
                 <div class="time-content">
                     <div class="time-header">
@@ -115,17 +118,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="time-desc">${step.details}</div>
                     ${extraStatus}
-                    ${getActionButtons(index + 1, step, prettyId, timeline)}
+                    ${getActionButtons(key, step, prettyId, timeline)}
                 </div>
             `;
 
-            container.appendChild(item);
+            container.appendChild(div);
         });
     }
 
-    function getActionButtons(stepNum, stepObj, prettyId, timeline) {
+    function getActionButtons(stepKey, stepObj, prettyId, timeline) {
         // Step 2: Registration Fee
-        if (stepNum === 2) {
+        if (stepKey === 'step2') {
             // If Course Fee (Step 4) is completed/verified, hide Reg Fee button!
             if (timeline.step4 && timeline.step4.status === 'completed') return "";
 
@@ -137,14 +140,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Step 4: Course Fee
-        if (stepNum === 4 && stepObj.status === 'pending' && stepObj.details !== "Waiting for Request") {
+        if (stepKey === 'step4' && stepObj.status === 'pending' && stepObj.details !== "Waiting for Request") {
             return `<div style="margin-top:10px;">
                 <a href="/course-fee.html?id=${prettyId}" class="btn-sm">Pay Course Fee</a>
             </div>`;
         }
 
         // Step 5: Documents
-        if (stepNum === 5 && stepObj.status === 'pending') {
+        if (stepKey === 'step5' && stepObj.status === 'pending') {
             return `<div style="margin-top:10px;">
                 <a href="/upload-documents.html?id=${prettyId}" class="btn-sm">Upload Documents</a>
             </div>`;

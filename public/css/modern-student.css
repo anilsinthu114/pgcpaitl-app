@@ -191,7 +191,7 @@ textarea:focus {
     padding: 8px 16px;
     border-radius: 20px;
     font-weight: 700;
-    text-transform: uppercase;
+    text-transform: capitalize;
     font-size: 0.9rem;
     margin: 10px 0;
 }
@@ -216,6 +216,11 @@ textarea:focus {
     color: #991b1b;
 }
 
+.status-badge.draft {
+    background: #e5e7eb;
+    color: #374151;
+}
+
 @media (max-width: 600px) {
     .header-row {
         flex-direction: column;
@@ -226,3 +231,13 @@ textarea:focus {
         padding: 20px;
     }
 }
+
+/* .caution {
+    background: #fff8e6;
+    border-left: 4px solid var(--accent);
+    padding: 20px;
+    border-radius: var(--radius);
+    margin-bottom: 30px;
+    display: flex;
+    gap: 15px;
+} */

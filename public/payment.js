@@ -113,12 +113,27 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         });
 
+        if (j.message) {
+          console.log("🔔 Notification:", j.message);
+          const type = (j.status && j.status.includes('duplicate')) ? 'warning' : 'success';
+
+          if (typeof window.showToast === 'function') {
+            window.showToast(j.message, type, 5000);
+          } else if (typeof window.toast === 'function') {
+            window.toast(j.message, type, 5000);
+          } else {
+            alert(j.message);
+          }
+        }
+
         const safeId = encodeURIComponent(prettyId || hiddenId.value || 'APP');
+
+        // If it's a duplicate, we might want to redirect immediately or let them read the alert
         setTimeout(() => {
           // Redirect to success page WITH ID for button usage
           const baseRedirect = j.redirect ? j.redirect.split('?')[0] : "/payment-success.html";
           window.location.href = baseRedirect + "?id=" + safeId;
-        }, 900);
+        }, j.message ? 2000 : 2500); // Faster redirect if alert handled, but alert blocks execution anyway
 
       } else {
         msg.style.color = "#c0392b";

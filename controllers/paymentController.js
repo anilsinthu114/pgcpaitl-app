@@ -37,7 +37,18 @@ exports.submitPayment = async (req, res) => {
             await fs.writeFile(screenshotPath, req.file.buffer);
         }
 
-        // Check for duplicate UTR usage
+        const paymentType = Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration');
+
+        // 1. CLEANUP REJECTED: Delete 'rejected' payments of this type/user to avoid history stack
+        // 1. CLEANUP REJECTED: Delete 'rejected' payments of this type/user to avoid history stack
+        const pt = String(paymentType).trim();
+        const [delRes] = await conn.query(
+            "DELETE FROM application_payments WHERE application_id=? AND payment_type=? AND LOWER(status)='rejected'",
+            [numericId, pt]
+        );
+        debug(`Deleted ${delRes.affectedRows} rejected old payments for AppID:${numericId} Type:${pt}`);
+
+        // 2. CHECK DUPLICATE UTR
         const [[existingPayment]] = await conn.query(
             "SELECT id, status FROM application_payments WHERE utr=? LIMIT 1",
             [utr]
@@ -47,20 +58,39 @@ exports.submitPayment = async (req, res) => {
             warn(`Duplicate payment submission attempt for UTR: ${utr}`);
             await conn.rollback();
 
-            // If it's the same application, treat as success (idempotency)
-            // But if status is already 'verified', we might alert? 
-            // For now, consistent with user request "add payment done status if any duplicates", we just return OK.
-
             let redirectUrl = null;
-            const pid = prettyId(numericId); // Ensure PID is available
-            if (req.body.payment_type === 'course_fee' || (Array.isArray(req.body.payment_type) && req.body.payment_type[0] === 'course_fee')) {
+            const pid = prettyId(numericId);
+            if (paymentType === 'course_fee') {
                 redirectUrl = `/upload-documents.html?id=${pid}`;
             }
 
             return res.json({ ok: true, message: "Payment already submitted", redirect: redirectUrl, status: 'duplicate' });
         }
 
-        const paymentType = Array.isArray(req.body.payment_type) ? req.body.payment_type[0] : (req.body.payment_type || 'registration');
+        // 3. CHECK EXISTING VALID PAYMENT (Prevent multiple uploads for same type)
+        const [[existingUserPayment]] = await conn.query(
+            "SELECT id FROM application_payments WHERE application_id=? AND payment_type=? AND status != 'rejected' LIMIT 1",
+            [numericId, paymentType]
+        );
+
+        if (existingUserPayment) {
+            warn(`Duplicate payment type submission attempt for AppID: ${numericId}, Type: ${paymentType}`);
+            await conn.rollback();
+
+            let redirectUrl = null;
+            const pid = prettyId(numericId);
+            if (paymentType === 'course_fee') {
+                redirectUrl = `/upload-documents.html?id=${pid}`;
+            } else {
+                redirectUrl = `/payment-success.html?id=${pid}`;
+            }
+            return res.json({
+                ok: true,
+                message: "You have already submitted a proof for this payment.",
+                redirect: redirectUrl,
+                status: 'duplicate_type'
+            });
+        }
 
         // Strict Amount Enforcer
         let finalAmount = 1000;
@@ -187,6 +217,15 @@ exports.verifyPayment = async (req, res) => {
             [p.application_id]
         );
         debug("Application flow state updated to payment_verified", { application_id: p.application_id });
+
+        // CLEANUP REJECTED: Since this new payment is verified, delete any old rejected attempts 
+        // for this application and type to keep the dashboard clean as per user request.
+        await conn.query(
+            "DELETE FROM application_payments WHERE application_id=? AND payment_type=? AND status='rejected'",
+            [p.application_id, p.payment_type]
+        );
+        debug("Cleaned up rejected payments after verification", { application_id: p.application_id });
+
         await conn.commit();
 
         debug("Sending payment status update email", { application_id: p.application_id });
@@ -230,6 +269,28 @@ exports.rejectPayment = async (req, res) => {
 
         await pool.query("UPDATE application_payments SET status='rejected' WHERE id=?", [id]);
         await pool.query("UPDATE applications SET status='rejected' WHERE id=?", [appId]);
+
+        // If Course Fee is rejected, delete uploaded documents so they must re-upload
+        if (payment.payment_type === 'course_fee') {
+            try {
+                const [files] = await pool.query("SELECT stored_path FROM application_files WHERE application_id=?", [appId]);
+                const basePath = process.env.FILE_BASE || path.resolve(__dirname, '..');
+
+                for (const f of files) {
+                    const absPath = path.isAbsolute(f.stored_path) ? f.stored_path : path.join(basePath, f.stored_path);
+                    try {
+                        await fs.unlink(absPath);
+                    } catch (e) {
+                        warn("Failed to delete file on disk during rejection cleanup", absPath);
+                    }
+                }
+
+                await pool.query("DELETE FROM application_files WHERE application_id=?", [appId]);
+                debug("Deleted application files after course fee rejection", { appId });
+            } catch (cleanupErr) {
+                errorLogger.error("Error cleaning up files for rejected payment", cleanupErr);
+            }
+        }
 
         const [apps] = await pool.query("SELECT email, fullName FROM applications WHERE id=?", [appId]);
         if (apps.length > 0) {

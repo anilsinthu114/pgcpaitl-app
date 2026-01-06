@@ -384,12 +384,13 @@ function paymentRejectedEmail(app, prettyId, amount, paymentType) {
         ❌ <strong>Verification Failed</strong><br>
         <strong>${pTypeLabel}:</strong> ${displayAmount}<br>
         Please re-upload a clear payment proof (UTR screenshot) ensuring the UTR number is visible.
+        ${paymentType === 'course_fee' ? '<br/><br/><strong>NOTE:</strong> Since your Course Fee payment was rejected, you must also <strong>re-upload your supporting documents</strong>.' : ''}
       </p>
     </div>
 
     <p>
-      You can re-upload your proof using the payment link 
-      <a href= "https://application.pgcpaitl.jntugv.edu.in/payment.html/?id=${prettyId}">Proceed to Re-upload</a>
+      You can re-upload your proof ${paymentType === 'course_fee' ? 'and documents' : ''} using the payment link 
+      <a href= "https://application.pgcpaitl.jntugv.edu.in/${paymentType === 'course_fee' ? 'course-fee.html' : 'payment.html'}?id=${prettyId}">Proceed to Re-upload</a>
     </p>
 
     <p style="margin-top:20px;">

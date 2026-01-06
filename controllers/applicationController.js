@@ -541,11 +541,11 @@ exports.uploadDocuments = async (req, res) => {
             [numericId]
         );
 
-        if (!courseFee || courseFee.status !== 'verified') {
+        if (!courseFee) {
             await conn.rollback();
             return res.status(403).json({
                 ok: false,
-                error: "Documents cannot be uploaded until the Course Fee payment is verified."
+                error: "Documents cannot be uploaded until the Course Fee payment is initiated."
             });
         }
 
@@ -870,7 +870,7 @@ exports.checkStatusProV2 = async (req, res) => {
         };
 
         // Final Status Logic
-        if (app.flow_state === 'accepted') {
+        if (app.flow_state === 'accepted' || app.status === 'accepted') {
             timeline.step3.status = 'completed';
             timeline.step3.details = "Application Accepted";
         }
@@ -887,7 +887,9 @@ exports.checkStatusProV2 = async (req, res) => {
                 id: prettyId(app.id),
                 email: app.email,
                 mobile: app.mobile,
-                course: "PGCPAITL 2025"
+                course: "PGCPAITL 2025",
+                status: app.status,
+                flow_state: app.flow_state
             },
             timeline
         });
