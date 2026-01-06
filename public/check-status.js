@@ -129,8 +129,19 @@ document.addEventListener("DOMContentLoaded", () => {
     function getActionButtons(stepKey, stepObj, prettyId, timeline) {
         // Step 2: Registration Fee
         if (stepKey === 'step2') {
-            // If Course Fee (Step 4) is completed/verified, hide Reg Fee button!
-            if (timeline.step4 && timeline.step4.status === 'completed') return "";
+            // Check outcome first
+            if (stepObj.status === 'completed') {
+                return `<div style="margin-top:5px; color:green; font-weight:bold; font-size:0.9rem;">
+                            ✓ Payment Verified
+                        </div>`;
+            }
+            if (stepObj.status === 'in_progress') {
+                return `<div style="margin-top:5px; color:#e67e22; font-weight:bold; font-size:0.9rem;">
+                            ⌛ Verification Pending
+                        </div>`;
+            }
+            // If Course Fee (Step 4) is completed/verified, hide Reg Fee button logic if we want, 
+            // but usually reg fee must be paid first anyway.
 
             if (stepObj.status === 'pending') {
                 return `<div style="margin-top:10px;">
@@ -140,11 +151,32 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Step 4: Course Fee
-        if (stepKey === 'step4' && stepObj.status === 'pending' && stepObj.details !== "Waiting for Request") {
-            return `<div style="margin-top:10px;">
-                <a href="/course-fee.html?id=${prettyId}" class="btn-sm">Pay Course Fee</a>
-            </div>`;
+        if (stepKey === 'step4') {
+            if (stepObj.status === 'completed') {
+                return `<div style="margin-top:5px; color:green; font-weight:bold; font-size:0.9rem;">
+                            ✓ Payment Verified
+                        </div>`;
+            }
+            if (stepObj.status === 'in_progress') {
+                return `<div style="margin-top:5px; color:#e67e22; font-weight:bold; font-size:0.9rem;">
+                            ⌛ Verification Pending
+                        </div>`;
+            }
+
+            if (stepObj.status === 'pending') {
+                // Only show course fee pay button if Registration Fee (step2) is verified
+                if (timeline.step2 && timeline.step2.status === 'completed') {
+                    return `<div style="margin-top:10px;">
+                        <a href="/course-fee.html?id=${prettyId}" class="btn-sm">Pay Course Fee</a>
+                    </div>`;
+                } else {
+                    return `<div style="margin-top:5px; font-size:0.85rem; color:#95a5a6; font-style:italic;">
+                                🔒 Complete Registration Fee First
+                            </div>`;
+                }
+            }
         }
+
 
         // Step 5: Documents
         if (stepKey === 'step5' && stepObj.status === 'pending') {
