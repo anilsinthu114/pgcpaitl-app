@@ -22,17 +22,15 @@ body {
     color: var(--pg-text);
     margin: 0;
     padding: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    min-height: 100vh;
 }
 
 .gateway-wrapper {
     display: flex;
     width: 100%;
     max-width: 1100px;
-    height: 95vh;
+    margin: 20px auto;
+    min-height: 80vh;
     /* Fixed height for dashboard feel */
     max-height: 900px;
     background: var(--pg-surface);

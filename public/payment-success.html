@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/student-form.css">
   <link rel="stylesheet" href="/css/modern-ui.css">
   <link rel="stylesheet" href="/css/message.css">
+  <link rel="stylesheet" href="/css/modern-student.css">
   <style>
     /* Specific overrides for this page */
     .card {
@@ -82,80 +83,92 @@
 </head>
 
 <body>
-  <div class="card" style="text-align: center;">
-    <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
+  <nav class="navbar">
+    <a href="/" class="nav-brand">PGCPAITL ADMISSIONS</a>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/check-status.html">Track Status</a></li>
+      <li><a href="/fee-rules.html">Fee Rules</a></li>
+      <li><a href="/" class="nav-btn">Apply Now</a></li>
+    </ul>
+  </nav>
 
-    <h1>Registration Fee Received</h1>
+  <div class="page">
+    <div class="card" style="text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
 
-    <p style="color: #4a5568; font-size: 1rem;">
-      We humbly acknowledge the receipt of your registration fee of <strong>₹1,000</strong>.
-      <br>You have successfully completed the initial step of the admission process.
-    </p>
+      <h1>Registration Fee Received</h1>
 
-    <!-- Next Steps Timeline -->
-    <div class="timeline">
+      <p style="color: #4a5568; font-size: 1rem;">
+        We humbly acknowledge the receipt of your registration fee of <strong>₹1,000</strong>.
+        <br>You have successfully completed the initial step of the admission process.
+      </p>
 
-      <!-- Step 1 (Done) -->
-      <div class="timeline-item">
-        <div class="timeline-icon" style="background:#48bb78; border-color:#48bb78; color:white;">✓</div>
-        <div class="timeline-content">
-          <h3>Registration & Fee Payment</h3>
-          <p>Completed successfully.</p>
+      <!-- Next Steps Timeline -->
+      <div class="timeline">
+
+        <!-- Step 1 (Done) -->
+        <div class="timeline-item">
+          <div class="timeline-icon" style="background:#48bb78; border-color:#48bb78; color:white;">✓</div>
+          <div class="timeline-content">
+            <h3>Registration & Fee Payment</h3>
+            <p>Completed successfully.</p>
+          </div>
         </div>
+
+        <!-- Step 2 (Pending) -->
+        <div class="timeline-item">
+          <div class="timeline-icon">2</div>
+          <div class="timeline-content">
+            <h3>Course Fee Payment</h3>
+            <p>Please proceed to pay the program tuition fee (Full/EMI).</p>
+            <div class="badge-deadline">Deadline: 06th February 2026</div>
+          </div>
+        </div>
+
+        <!-- Step 3 (Future) -->
+        <div class="timeline-item">
+          <div class="timeline-icon" style="border-color:#cbd5e0; color:#cbd5e0;">3</div>
+          <div class="timeline-content">
+            <h3 style="color:#718096">Upload Documents</h3>
+            <p>Submit your academic certificates for verification.</p>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Step 2 (Pending) -->
-      <div class="timeline-item">
-        <div class="timeline-icon">2</div>
-        <div class="timeline-content">
-          <h3>Course Fee Payment</h3>
-          <p>Please proceed to pay the program tuition fee.</p>
-          <div class="badge-deadline">Deadline: 31st January 2026</div>
-        </div>
+      <div
+        style="background: #ebf8ff; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #4299e1; text-align: left;">
+        <small style="color: #2b6cb0;">
+          <strong>Note:</strong> A confirmation email with transaction details has been sent to your registered address.
+          Please keep your UTR number safe for future reference.
+        </small>
       </div>
 
-      <!-- Step 3 (Future) -->
-      <div class="timeline-item">
-        <div class="timeline-icon" style="border-color:#cbd5e0; color:#cbd5e0;">3</div>
-        <div class="timeline-content">
-          <h3 style="color:#718096">Upload Documents</h3>
-          <p>Submit your academic certificates for verification.</p>
-        </div>
+      <div class="action-buttons"
+        style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+
+        <!-- Left Button: Secure Course Fee Payment -->
+        <a id="btnSecurePay" href="#" class="btn-dashboard"
+          style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: inline-flex; align-items: center; gap: 8px;">
+          <svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Pay Course Fee (Secure)
+        </a>
+
+        <!-- Right Button: Visit Course Website -->
+        <a href="https://pgcpaitl.jntugv.edu.in" class="btn-dashboard" target="_blank" rel="noopener noreferrer"
+          style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); display: inline-flex; align-items: center; gap: 8px;">
+          <svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          Visit Course Website
+        </a>
+
       </div>
-
-    </div>
-
-    <div
-      style="background: #ebf8ff; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #4299e1; text-align: left;">
-      <small style="color: #2b6cb0;">
-        <strong>Note:</strong> A confirmation email with transaction details has been sent to your registered address.
-        Please keep your UTR number safe for future reference.
-      </small>
-    </div>
-
-    <div class="action-buttons"
-      style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-
-      <!-- Left Button: Secure Course Fee Payment -->
-      <a id="btnSecurePay" href="#" class="btn-dashboard"
-        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: inline-flex; align-items: center; gap: 8px;">
-        <svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-        Pay Course Fee (Secure)
-      </a>
-
-      <!-- Right Button: Visit Course Website -->
-      <a href="https://pgcpaitl.jntugv.edu.in" class="btn-dashboard" target="_blank" rel="noopener noreferrer"
-        style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); display: inline-flex; align-items: center; gap: 8px;">
-        <svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-        </svg>
-        Visit Course Website
-      </a>
-
     </div>
   </div>
 

@@ -3,7 +3,7 @@ const fs = require("fs/promises");
 const fsSync = require("fs");
 const pool = require("../config/db");
 const { debug, info, warn, error } = require("../config/debug");
-const { prettyId } = require("../utils/helpers");
+const { prettyId, encrypt, decrypt } = require("../utils/helpers");
 const Mailer = require("../mailer");
 const { appLogger, paymentLogger, errorLogger } = require("../logger");
 
@@ -16,7 +16,8 @@ exports.submitPayment = async (req, res) => {
         return res.status(400).json({ ok: false });
     debug("Validation passed, creating payment submission");
 
-    const numericId = Number(application_id.split("-").pop());
+    const decryptedId = decrypt(application_id);
+    const numericId = Number(decryptedId.split("-").pop());
     const conn = await pool.getConnection();
 
     try {
@@ -60,51 +61,71 @@ exports.submitPayment = async (req, res) => {
 
             let redirectUrl = null;
             const pid = prettyId(numericId);
+            const encryptedPid = encrypt(pid);
             if (paymentType === 'course_fee') {
-                redirectUrl = `/upload-documents.html?id=${pid}`;
+                redirectUrl = `/upload-documents.html?id=${encryptedPid}`;
             }
 
             return res.json({ ok: true, message: "Payment already submitted", redirect: redirectUrl, status: 'duplicate' });
         }
 
-        // 3. CHECK EXISTING VALID PAYMENT (Prevent multiple uploads for same type)
-        const [[existingUserPayment]] = await conn.query(
-            "SELECT id FROM application_payments WHERE application_id=? AND payment_type=? AND status != 'rejected' LIMIT 1",
+        // 3. CHECK EXISTING VALID PAYMENT (Prevent multiple uploads for same type unless EMI)
+        const [[paidData]] = await conn.query(
+            "SELECT SUM(amount) as totalPaid FROM application_payments WHERE application_id=? AND payment_type=? AND status != 'rejected'",
             [numericId, paymentType]
         );
+        const totalPaid = Number(paidData.totalPaid || 0);
 
-        if (existingUserPayment) {
-            warn(`Duplicate payment type submission attempt for AppID: ${numericId}, Type: ${paymentType}`);
+        if (paymentType === 'registration' && totalPaid >= 1000) {
+            warn(`Duplicate registration fee attempt for AppID: ${numericId}`);
             await conn.rollback();
-
-            let redirectUrl = null;
-            const pid = prettyId(numericId);
-            if (paymentType === 'course_fee') {
-                redirectUrl = `/upload-documents.html?id=${pid}`;
-            } else {
-                redirectUrl = `/payment-success.html?id=${pid}`;
-            }
+            const encryptedPid = encrypt(prettyId(numericId));
             return res.json({
                 ok: true,
-                message: "You have already submitted a proof for this payment.",
-                redirect: redirectUrl,
+                message: "Registration fee already submitted.",
+                redirect: `/payment-success.html?id=${encryptedPid}`,
+                status: 'duplicate_type'
+            });
+        }
+
+        if (paymentType === 'course_fee' && totalPaid >= 30000) {
+            warn(`Duplicate full course fee attempt for AppID: ${numericId}`);
+            await conn.rollback();
+            const encryptedPid = encrypt(prettyId(numericId));
+            return res.json({
+                ok: true,
+                message: "Full course fee already submitted.",
+                redirect: `/upload-documents.html?id=${encryptedPid}`,
                 status: 'duplicate_type'
             });
         }
 
         // Strict Amount Enforcer
         let finalAmount = 1000;
+        const requestedAmount = Number(req.body.amount);
         if (paymentType === 'course_fee') {
-            finalAmount = 30000;
+            if (requestedAmount === 15000 || requestedAmount === 30000) {
+                finalAmount = requestedAmount;
+            } else {
+                finalAmount = 30000;
+            }
+
+            // Prevent overpayment
+            if (totalPaid + finalAmount > 30000) {
+                await conn.rollback();
+                return res.status(400).json({ ok: false, error: "Total payment cannot exceed ₹30,000." });
+            }
         } else {
             finalAmount = 1000;
         }
 
+        const emiOption = req.body.fee_opt || null;
+
         const [r] = await conn.query(
             `INSERT INTO application_payments
-         (application_id,utr,screenshot_path,status,payment_type,amount)
-         VALUES (?,?,?,?,?,?)`,
-            [numericId, utr, screenshotPath, 'uploaded', paymentType, finalAmount]
+         (application_id,utr,screenshot_path,status,payment_type,amount,emi_option)
+         VALUES (?,?,?,?,?,?,?)`,
+            [numericId, utr, screenshotPath, 'uploaded', paymentType, finalAmount, emiOption]
         );
         const paymentId = `PGCPAITL-Pay-${String(r.insertId).padStart(6, "0")}`;
         debug("Payment submission created", r.insertId);
@@ -133,7 +154,8 @@ exports.submitPayment = async (req, res) => {
                 prettyId(numericId),
                 utr,
                 finalAmount,
-                paymentType
+                paymentType,
+                emiOption
             )
         );
         debug("Payment received email sent");
@@ -173,7 +195,8 @@ exports.submitPayment = async (req, res) => {
             redirectUrl = `/payment-success.html?id=${pid}`;
         }
 
-        res.json({ ok: true, message: "Payment submitted", redirect: redirectUrl, application_id: pid });
+        const encryptedPid = encrypt(pid);
+        res.json({ ok: true, message: "Payment submitted", redirect: `${redirectUrl.split('?')[0]}?id=${encryptedPid}`, application_id: pid });
 
     } catch (err) {
         await conn.rollback();

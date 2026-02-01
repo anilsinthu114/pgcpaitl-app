@@ -3,7 +3,7 @@ const fs = require("fs/promises");
 const fsSync = require("fs");
 const pool = require("../config/db");
 const { debug, info, warn, error } = require("../config/debug");
-const { prettyId } = require("../utils/helpers");
+const { prettyId, encrypt, decrypt } = require("../utils/helpers");
 const Mailer = require("../mailer");
 const { appLogger, paymentLogger, errorLogger } = require("../logger");
 
@@ -84,11 +84,13 @@ exports.createDraft = async (req, res) => {
         const [r] = await conn.query(sql, values);
         debug("Application draft created", r.insertId);
         const pid = prettyId(r.insertId);
-        debug("Application ID generated", pid);
+        const encryptedId = encrypt(pid);
+        debug("Application ID generated", pid, "Encrypted:", encryptedId);
         res.json({
             ok: true,
             application_id: pid,
-            redirect: `/payment.html?id=${pid}`
+            encrypted_id: encryptedId,
+            redirect: `/payment.html?id=${encryptedId}`
         });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
@@ -196,9 +198,10 @@ exports.checkStatus = async (req, res) => {
     const { id, identifier } = req.query; // identifier = email or mobile
     if (!id || !identifier) return res.status(400).json({ ok: false, error: "Missing fields" });
 
-    let dbId = id;
-    if (String(id).startsWith("PGCPAITL-")) {
-        dbId = Number(id.split("-").pop());
+    let decryptedId = decrypt(id);
+    let dbId = decryptedId;
+    if (String(decryptedId).startsWith("PGCPAITL-")) {
+        dbId = Number(decryptedId.split("-").pop());
     }
 
     try {
@@ -215,7 +218,8 @@ exports.checkStatus = async (req, res) => {
             status: app.status,
             flow_state: app.flow_state,
             fullName: app.fullName,
-            prettyId: prettyId(app.id)
+            prettyId: prettyId(app.id),
+            encryptedId: encrypt(prettyId(app.id))
         });
 
     } catch (err) {
@@ -224,12 +228,29 @@ exports.checkStatus = async (req, res) => {
     }
 };
 
-exports.resolveId = (req, res) => {
+exports.resolveId = async (req, res) => {
     const { pretty } = req.query;
     if (!pretty) return res.status(400).json({ ok: false });
-    const id = Number(pretty.split("-").pop());
-    if (isNaN(id)) return res.status(400).json({ ok: false, error: "Invalid ID format" });
-    res.json({ ok: true, id });
+    try {
+        const decrypted = decrypt(pretty);
+        const idNum = Number(decrypted.split("-").pop());
+        if (isNaN(idNum)) return res.status(400).json({ ok: false, error: "Invalid ID format" });
+
+        // Get payment summary for course fee
+        const [[courseData]] = await pool.query(
+            "SELECT SUM(amount) as totalCoursePaid FROM application_payments WHERE application_id=? AND payment_type='course_fee' AND status != 'rejected'",
+            [idNum]
+        );
+
+        res.json({
+            ok: true,
+            id: idNum,
+            prettyId: decrypted,
+            coursePaid: Number(courseData.totalCoursePaid || 0)
+        });
+    } catch (err) {
+        res.status(400).json({ ok: false, error: "Invalid ID" });
+    }
 };
 
 
@@ -238,7 +259,15 @@ exports.listApplications = async (_, res) => {
     debug("Fetching admin applications");
 
     try {
-        // AUTO-FIX
+        // AUTO-FIX & DYNAMIC SCHEMA SYNC
+        // 1. Ensure emi_option column exists
+        const [cols] = await pool.query("SHOW COLUMNS FROM application_payments LIKE 'emi_option'");
+        if (cols.length === 0) {
+            info("Dynamic Schema Sync: Adding emi_option to application_payments");
+            await pool.query("ALTER TABLE application_payments ADD COLUMN emi_option ENUM('full', 'emi') DEFAULT NULL AFTER payment_type");
+        }
+
+        // 2. Fix legacy pending statuses
         await pool.query(`
     UPDATE application_payments 
     SET status = 'uploaded' 
@@ -262,6 +291,8 @@ exports.listApplications = async (_, res) => {
            -- Course Fee Details
            (SELECT status FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_status,
            (SELECT utr FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_utr,
+           (SELECT emi_option FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_emi_option,
+           (SELECT COALESCE(SUM(amount), 0) FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' AND status='verified') as total_course_paid,
            (SELECT updated_at FROM application_payments WHERE application_id = a.id AND payment_type='course_fee' ORDER BY id DESC LIMIT 1) as course_date
 
     FROM applications a
@@ -409,12 +440,34 @@ exports.sendBulkMail = async (req, res) => {
     if (!message || !subject) return res.status(400).json({ ok: false, error: "Subject and Message are required" });
 
     try {
-        let query = "SELECT email, fullName FROM applications";
+        let query = "SELECT DISTINCT a.email, a.fullName FROM applications a";
         const params = [];
 
-        // status 'all' means everyone, otherwise filter
-        if (status && status !== 'all') {
-            query += " WHERE status=?";
+        if (status === 'pending_fee') {
+            // Find those who:
+            // 1. Missing verified registration fee
+            // 2. Accepted but missing any course fee
+            // 3. Accepted but paid < 30,000 course fee (Partial EMI)
+            query = `
+                SELECT DISTINCT a.email, a.fullName 
+                FROM applications a
+                LEFT JOIN (
+                    SELECT application_id, SUM(amount) as total_reg 
+                    FROM application_payments 
+                    WHERE payment_type = 'registration' AND status = 'verified' 
+                    GROUP BY application_id
+                ) r ON a.id = r.application_id
+                LEFT JOIN (
+                    SELECT application_id, SUM(amount) as total_course 
+                    FROM application_payments 
+                    WHERE payment_type = 'course_fee' AND status = 'verified' 
+                    GROUP BY application_id
+                ) c ON a.id = c.application_id
+                WHERE (r.total_reg IS NULL OR r.total_reg < 1000) -- No Reg Fee
+                OR (a.status = 'accepted' AND (c.total_course IS NULL OR c.total_course < 30000)) -- No/Partial Course Fee
+            `;
+        } else if (status && status !== 'all') {
+            query += " WHERE a.status=?";
             params.push(status);
         }
 
@@ -463,6 +516,57 @@ exports.sendBulkMail = async (req, res) => {
 
     } catch (err) {
         error("Bulk mail error", err);
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
+// Admin: Send Individual Mail
+exports.sendIndividualMail = async (req, res) => {
+    const { id } = req.params;
+    const { subject, message } = req.body;
+
+    if (!subject || !message) return res.status(400).json({ ok: false, error: "Subject and Message are required" });
+
+    try {
+        const [[app]] = await pool.query("SELECT email, fullName FROM applications WHERE id=?", [id]);
+        if (!app) return res.status(404).json({ ok: false, error: "Applicant not found" });
+
+        const personalizedHtml = Mailer.layout(`
+            <h2 style="color:#003c7a;">Official Notification</h2>
+            <p>Dear <strong>${app.fullName || 'Applicant'}</strong>,</p>
+            <div style="font-size:14px; line-height:1.6; color:#333;">
+                ${message}
+            </div>
+            <p style="margin-top:20px;">
+                Regards,<br/>
+                <strong>PGCPAITL Admissions Team</strong>
+            </p>
+        `);
+
+        await Mailer.sendMail(app.email, subject, personalizedHtml);
+        res.json({ ok: true, message: "Email sent successfully to " + app.email });
+
+    } catch (err) {
+        error("Individual mail error", err);
+        res.status(500).json({ ok: false, error: err.message });
+    }
+};
+
+// Admin: Remind Second Installment
+exports.remindSecondInstallment = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [[app]] = await pool.query("SELECT id, email, fullName FROM applications WHERE id=?", [id]);
+        if (!app) return res.status(404).json({ ok: false, error: "Application not found" });
+
+        const encryptedId = encrypt(prettyId(app.id));
+        const html = Mailer.secondInstallmentReminderEmail(app, encryptedId);
+
+        await Mailer.sendMail(app.email, "Reminder: Second Installment Due - PGCPAITL", html);
+        res.json({ ok: true, message: "Second installment reminder sent" });
+
+    } catch (err) {
+        error("Reminder error", err);
         res.status(500).json({ ok: false, error: err.message });
     }
 };
@@ -643,9 +747,10 @@ exports.checkStatus = async (req, res) => {
     }
 
     try {
-        let numericId = id;
-        if (String(id).includes("-")) {
-            numericId = Number(id.split("-").pop());
+        let decryptedId = decrypt(id);
+        let numericId = decryptedId;
+        if (String(decryptedId).includes("-")) {
+            numericId = Number(decryptedId.split("-").pop());
         }
 
         const [[app]] = await pool.query(
@@ -693,9 +798,10 @@ exports.checkStatusPro = async (req, res) => {
     }
 
     try {
-        let numericId = id;
-        if (String(id).includes("-")) {
-            numericId = Number(id.split("-").pop());
+        let decryptedId = decrypt(id);
+        let numericId = decryptedId;
+        if (String(decryptedId).includes("-")) {
+            numericId = Number(decryptedId.split("-").pop());
         }
 
         const [[app]] = await pool.query(
@@ -802,9 +908,10 @@ exports.checkStatusProV2 = async (req, res) => {
     }
 
     try {
-        let numericId = id;
-        if (String(id).includes("-")) {
-            numericId = Number(id.split("-").pop());
+        let decryptedId = decrypt(id);
+        let numericId = decryptedId;
+        if (String(decryptedId).includes("-")) {
+            numericId = Number(decryptedId.split("-").pop());
         }
 
         const [[app]] = await pool.query(
@@ -823,11 +930,17 @@ exports.checkStatusProV2 = async (req, res) => {
             [app.id]
         );
 
-        // Fetch Course Fee Payment
-        const [[coursePayment]] = await pool.query(
-            "SELECT * FROM application_payments WHERE application_id=? AND payment_type='course_fee' ORDER BY id DESC LIMIT 1",
+        // Fetch Course Fee Payments (Aggregated for EMI support)
+        const [coursePayments] = await pool.query(
+            "SELECT amount, status, utr, uploaded_at FROM application_payments WHERE application_id=? AND payment_type='course_fee' ORDER BY uploaded_at DESC",
             [app.id]
         );
+
+        const totalCoursePaid = coursePayments.reduce((sum, p) => sum + Number(p.amount), 0);
+        const latestCoursePayment = coursePayments[0];
+        const isFullPaid = totalCoursePaid >= 30000;
+        const anyPending = coursePayments.some(p => p.status === 'uploaded' || p.status === 'pending');
+        const allVerified = coursePayments.length > 0 && !anyPending;
 
         // Fetch Documents
         const [[docCount]] = await pool.query(
@@ -857,13 +970,15 @@ exports.checkStatusProV2 = async (req, res) => {
             },
             step4: {
                 label: "Course Fee Payment",
-                status: coursePayment ? (coursePayment.status === 'verified' ? 'completed' : 'in_progress') : 'pending',
-                date: coursePayment ? coursePayment.uploaded_at : null,
-                details: coursePayment ? `UTR: ${coursePayment.utr} (${coursePayment.status === 'verified' ? 'Verified' : 'Verification Pending'})` : "Waiting for Request"
+                status: totalCoursePaid > 0 ? (allVerified && isFullPaid ? 'completed' : 'in_progress') : 'pending',
+                date: latestCoursePayment ? latestCoursePayment.uploaded_at : null,
+                details: totalCoursePaid > 0
+                    ? `Paid: ₹${totalCoursePaid.toLocaleString('en-IN')} ${isFullPaid ? '(Full)' : '(Installment)'} - ${allVerified ? 'Verified' : 'Verification Pending'}`
+                    : "Waiting for Payment"
             },
             step5: {
                 label: "Document Verification",
-                status: docCount.count > 0 ? (coursePayment && coursePayment.status === 'verified' ? 'completed' : 'in_progress') : 'pending',
+                status: docCount.count > 0 ? (allVerified && isFullPaid ? 'completed' : 'in_progress') : 'pending',
                 date: null,
                 details: docCount.count > 0 ? `${docCount.count} Documents Uploaded` : "Pending Upload"
             }
@@ -874,7 +989,7 @@ exports.checkStatusProV2 = async (req, res) => {
             timeline.step3.status = 'completed';
             timeline.step3.details = "Application Accepted";
         }
-        if (coursePayment && coursePayment.status === 'verified') {
+        if (allVerified && isFullPaid) {
             timeline.step4.status = 'completed';
             // If course fee is verified, documents are verified too
             if (docCount.count > 0) timeline.step5.status = 'completed';
@@ -885,6 +1000,7 @@ exports.checkStatusProV2 = async (req, res) => {
             app: {
                 fullName: app.fullName,
                 id: prettyId(app.id),
+                encryptedId: encrypt(prettyId(app.id)),
                 email: app.email,
                 mobile: app.mobile,
                 course: "PGCPAITL 2025",

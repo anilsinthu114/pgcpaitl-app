@@ -19,6 +19,9 @@ const authRoutes = require("./routes/authRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 
+// Start Cron Jobs
+require('./cron-jobs');
+
 const PORT = process.env.PORT;
 const HOST = process.env.HOST;
 

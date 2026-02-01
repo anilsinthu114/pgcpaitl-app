@@ -355,6 +355,12 @@ function renderApplications(apps) {
       requestFeeBtn = `<button class="btn-sm js-request-fee-btn" data-id="${app.id}" style="background:#8e44ad; color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Req. Fee</button>`;
     }
 
+    let remindSecondBtn = "";
+    // Show 'Remind 2nd' if EMI option selected AND paid between 15k and 29k (meaning 2nd pending)
+    if (app.course_emi_option === 'emi' && Number(app.total_course_paid || 0) === 15000) {
+      remindSecondBtn = `<button class="btn-sm js-remind-second-btn" data-id="${app.id}" style="background:#d35400; color:white; border:none; padding:4px 8px; font-size:0.75rem; margin-left:5px;">Remind 2nd</button>`;
+    }
+
     // Table Row
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -371,6 +377,7 @@ function renderApplications(apps) {
         <button class="btn-sm js-view-btn" data-id="${app.id}">View</button>
         ${remindBtn}
         ${requestFeeBtn}
+        ${remindSecondBtn}
       </td>
     `;
     tableBody.appendChild(tr);
@@ -387,6 +394,11 @@ function renderApplications(apps) {
     let gridRequestFeeBtn = "";
     if (payStatus === 'verified' && (!app.course_status || app.course_status !== 'verified')) {
       gridRequestFeeBtn = `<button class="btn-sm js-request-fee-btn" data-id="${app.id}" style="background:transparent; border:1px solid #8e44ad; color:#8e44ad; margin-left:10px;">Req. Fee</button>`;
+    }
+
+    let gridRemindSecondBtn = "";
+    if (app.course_emi_option === 'emi' && Number(app.total_course_paid || 0) >= 15000 && Number(app.total_course_paid || 0) < 30000) {
+      gridRemindSecondBtn = `<button class="btn-sm js-remind-second-btn" data-id="${app.id}" style="background:transparent; border:1px solid #d35400; color:#d35400; margin-left:10px;">Remind 2nd</button>`;
     }
 
     card.innerHTML = `
@@ -421,6 +433,7 @@ function renderApplications(apps) {
           <button class="btn-primary js-view-btn" data-id="${app.id}" style="flex:1;">View</button>
           ${gridRemindBtn}
           ${gridRequestFeeBtn}
+          ${gridRemindSecondBtn}
        </div>
     `;
     gridContainer.appendChild(card);
@@ -827,6 +840,63 @@ if (sendGroupMailBtn) {
   });
 }
 
+// =====================
+// INDIVIDUAL MAIL LOGIC
+// =====================
+const individualMailModal = document.getElementById("individualMailModal");
+const openIndivMailBtn = document.getElementById("openIndivMailBtn");
+const sendIndivMailBtn = document.getElementById("sendIndivMailBtn");
+
+if (openIndivMailBtn) {
+  openIndivMailBtn.addEventListener("click", () => {
+    const app = window.allApps.find(a => a.id == window.currentAppId);
+    if (!app) return showToast("Applicant not found", "error");
+
+    document.getElementById("indivMailName").innerText = app.fullName;
+    document.getElementById("indivMailEmail").innerText = app.email;
+    document.getElementById("indivMailSubject").value = "";
+    document.getElementById("indivMailMessage").value = "";
+
+    individualMailModal.style.display = "block";
+  });
+}
+
+if (sendIndivMailBtn) {
+  sendIndivMailBtn.addEventListener("click", async () => {
+    const id = window.currentAppId;
+    const subject = document.getElementById("indivMailSubject").value;
+    const message = document.getElementById("indivMailMessage").value;
+
+    if (!subject || !message) {
+      return showToast("Subject and Message are required", "error");
+    }
+
+    sendIndivMailBtn.innerText = "Sending...";
+    sendIndivMailBtn.disabled = true;
+
+    try {
+      const res = await fetchWithAuth(`/api/admin/application/${id}/send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, message })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        showToast("Message sent successfully!", "success");
+        individualMailModal.style.display = "none";
+      } else {
+        showToast("Error: " + data.error, "error");
+      }
+    } catch (e) {
+      showToast("Network Error", "error");
+    } finally {
+      sendIndivMailBtn.innerText = "Send Email";
+      sendIndivMailBtn.disabled = false;
+    }
+  });
+}
+
 
 /* =====================================================
    GLOBAL EVENT DELEGATION (CSP COMPLIANT)
@@ -853,6 +923,29 @@ document.addEventListener('click', async (e) => {
   if (reqFeeBtn) {
     const id = reqFeeBtn.dataset.id;
     if (id) await window.requestCourseFee(e, id);
+    return;
+  }
+
+  // 2c. Remind 2nd Installment
+  const remindSecondBtn = e.target.closest('.js-remind-second-btn');
+  if (remindSecondBtn) {
+    const id = remindSecondBtn.dataset.id;
+    if (!confirm("Send Second Installment Reminder?")) return;
+
+    remindSecondBtn.innerText = "Sending...";
+    remindSecondBtn.disabled = true;
+
+    try {
+      const res = await fetchWithAuth(`/api/admin/application/${id}/remind-second-installment`, { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) showToast("Reminder Sent!", "success");
+      else showToast(data.error || "Failed", "error");
+    } catch (err) {
+      showToast("Network Error", "error");
+    } finally {
+      remindSecondBtn.innerText = "Remind 2nd";
+      remindSecondBtn.disabled = false;
+    }
     return;
   }
 

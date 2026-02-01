@@ -8,14 +8,24 @@
 
   <!-- NO INLINE JS (CSP SAFE) -->
   <!-- CSP Safe: External CSS -->
-</head>
-<link rel="stylesheet" href="/css/student-form.css">
-<link rel="stylesheet" href="/css/toast.css">
-<link rel="stylesheet" href="/css/modern-ui.css"> <!-- New UI Styles -->
+  <link rel="stylesheet" href="/css/student-form.css">
+  <link rel="stylesheet" href="/css/toast.css">
+  <link rel="stylesheet" href="/css/modern-ui.css"> <!-- New UI Styles -->
+  <link rel="stylesheet" href="/css/modern-student.css"> <!-- Student Styles & Navbar -->
 </head>
 
 <body>
-  <div class="page">
+  <nav class="navbar">
+    <a href="/" class="nav-brand">PGCPAITL ADMISSIONS</a>
+    <ul class="nav-links">
+      <li><a href="/" class="active">Application Page</a></li>
+      <li><a href="/check-status.html">Track Status</a></li>
+      <li><a href="/fee-rules.html">Fee Rules</a></li>
+      <!-- <li><a href="/check-status.html" class="nav-btn">Apply Now</a></li> -->
+    </ul>
+  </nav>
+
+  <div class="page page-wide">
     <div class="card">
 
       <header class="form-header">
@@ -39,11 +49,6 @@
             <img src="dsnlu-logo.png" alt="DSNLU Logo" />
           </div>
 
-          <a href="/check-status.html" class="btn-primary"
-            style="position:absolute; top:20px; right:20px; text-decoration:none; font-size:13px; padding:8px 15px; background:#004c97; color:white; border-radius:30px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-            Track Application
-          </a>
-
         </div>
 
       </header>
@@ -51,8 +56,12 @@
       <!-- NEW: MODERN MARQUEE -->
       <div class="marquee-container">
         <div class="marquee-content">
-          📢 IMPORTANT: Application Registration Fee ends on 6th February 2026. <span class="marquee-separator">|</span>
-          Course Fee Payment ends on 6th February 2026. <span class="marquee-separator">|</span>
+          📢 PGCPAITL Admission Fee Update: Total fee ₹30,000 — Pay ₹15,000 on or before 06-02-2026 and the remaining
+          ₹15,000 on or before 06-05-2026 under the two-installment (EMI) option.
+          <a href="/fee-rules.html" style="color: #fff; text-decoration: underline; margin-left: 5px;">View Detailed
+            Rules</a>
+          <span class="marquee-separator">|</span>
+          Application Registration Fee ends on 6th February 2026. <span class="marquee-separator">|</span>
           Class Work Commencement is postponed to 09 February 2026 (Tentatively).
         </div>
       </div>
@@ -73,9 +82,9 @@
         <div class="modern-info-card card-alert">
           <div class="card-icon">💸</div>
           <div class="card-info">
-            <span class="card-label">Course Fee Deadline</span>
-            <span class="card-value" style="color:#c0392b;">6 Feb 2026</span>
-            <span class="card-value">₹ 30,000</span>
+            <span class="card-label">Course Fee (EMI/Full)</span>
+            <span class="card-value" style="color:#c0392b;">₹ 15,000 (1st Inst.)</span>
+            <span class="card-value">₹ 30,000 (Total)</span>
           </div>
         </div>
 
@@ -466,7 +475,7 @@
 
         <!-- Final Submit -->
         <div class="btn-bar" id="submitContainer" style="display:none;">
-          <button type="submit" class="btn-primary">Submit Application</button>
+          <button type="submit" class="btn-primary">Proceed to Payment</button>
         </div>
 
       </form>

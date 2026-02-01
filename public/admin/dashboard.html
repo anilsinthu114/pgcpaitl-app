@@ -199,8 +199,41 @@
           Reviewing</button>
         <button id="rejectBtn"
           style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">Reject</button>
+        <button id="openIndivMailBtn"
+          style="background:#003c7a; color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">✉
+          Send Message</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- INDIVIDUAL MAIL MODAL -->
+  <div id="individualMailModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <span id="closeIndividualMailBtn" class="close"
+        onclick="document.getElementById('individualMailModal').style.display='none'">&times;</span>
+      <h2 style="color:var(--primary); margin-top:0;">Send Message to Applicant</h2>
+      <p style="font-size:0.9rem; color:#666;">Applicant: <strong id="indivMailName">-</strong> (<span
+          id="indivMailEmail">-</span>)</p>
+
+      <div style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Subject:</label>
+        <input type="text" id="indivMailSubject" placeholder="Email Subject"
+          style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Message (HTML Allowed):</label>
+        <textarea id="indivMailMessage" rows="8" placeholder="Type your personalized message..."
+          style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-family:inherit;"></textarea>
+      </div>
+
+      <div style="text-align:right;">
+        <button id="sendIndivMailBtn"
+          style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">
+          Send Email
+        </button>
+      </div>
     </div>
   </div>
 
@@ -214,7 +247,8 @@
         <label style="display:block; font-weight:bold; margin-bottom:5px;">To:</label>
         <select id="groupMailTarget" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
           <option value="accepted">All Accepted Candidates</option>
-          <option value="submitted">All Submitted Candidates</option>
+          <option value="submitted">All Submitted Candidates (Verified)</option>
+          <option value="pending_fee">Pending Fee Candidates (Reg/Course)</option>
           <option value="rejected">All Rejected Candidates</option>
           <option value="all">Everyone (All Applicants)</option>
         </select>

@@ -3,6 +3,7 @@
  * Modern academic-grade email templates for all notifications
  ********************************************************************/
 const nodemailer = require("nodemailer");
+const { encrypt } = require("./utils/helpers");
 
 // ------------------------------------------------------------------
 // 1. Transporter Setup
@@ -118,12 +119,15 @@ function layout(content) {
 
 function announcementBlock() {
   return `<div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #ffeeba;">
-        <h4 style="margin: 0 0 10px; color: #856404; font-size: 16px;">📢 Important Updates</h4>
-        <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-          <li style="margin-bottom: 5px;"><strong>Registration Fee Deadline:</strong> 6th February 2026</li>
-          <li style="margin-bottom: 5px;"><strong>Course Fee Payment Deadline:</strong> 6th February 2026</li>
-          <li><strong>Course Commencement:</strong> 9th February 2026 (Tentatively)</li>
-        </ul>
+        <h4 style="margin: 0 0 10px; color: #856404; font-size: 16px;">📢 Important Update (Fee & EMI)</h4>
+        <div style="font-size: 14px; line-height: 1.5;">
+          <strong>Course Fee Payment Update:</strong> Total fee ₹30,000. <br>
+          <strong>EMI Option:</strong> Pay ₹15,000 on or before <strong>06 Feb 2026</strong> and the remaining ₹15,000 on or before <strong>06 May 2026</strong>. <br>
+          <em>*Admission will be confirmed only after the first installment payment.</em>
+          <hr style="border: 0; border-top: 1px solid #ffeeba; margin: 10px 0;">
+          • Registration Fee Deadline: <strong>6th February 2026</strong> <br>
+          • Course Commencement: <strong>9th February 2026</strong> (Tentatively)
+        </div>
       </div>
       `
 }
@@ -171,7 +175,7 @@ function applicantSubmissionEmail(app, id) {
 
     </p>
     <div style="text-align:center;margin-top:20px;">
-      <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${id}" 
+      <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${encrypt(id)}" 
          style="background-color:#003c7a;color:#fff;padding:12px 24px;border-radius:4px;text-decoration:none;font-weight:bold;display:inline-block;">
         Pay Now
       </a>
@@ -242,11 +246,12 @@ function statusUpdateEmail(app, status) {
 // EMAIL TEMPLATE 6: Payment Received Acknowledgement
 // ------------------------------------------------------------------
 
-function paymentReceivedEmail(appObj, paymentId, prettyId, utr, amount, paymentType) {
+function paymentReceivedEmail(appObj, paymentId, prettyId, utr, amount, paymentType, emiOption) {
   const isCourseFee = paymentType === 'course_fee';
   const title = isCourseFee ? "Course Fee Payment Received" : "Application Registered and Payment Received";
   const pTypeLabel = isCourseFee ? 'Course Fee' : 'Registration Fee';
   const displayAmount = amount ? `₹${Number(amount).toLocaleString('en-IN')}` : '';
+  const installmentInfo = emiOption;
 
   return layout(`
     <h2 style="color:#004c97; margin-top:0;">${title}</h2>
@@ -273,6 +278,12 @@ function paymentReceivedEmail(appObj, paymentId, prettyId, utr, amount, paymentT
           <td style="font-weight:bold;">Amount:</td>
           <td>${displayAmount}</td>
         </tr>
+        ${installmentInfo ? `
+        <tr>
+          <td style="font-weight:bold;">Payment Plan:</td>
+          <td>${installmentInfo === 'emi' ? 'Two-Installment (EMI)' : 'Full Payment'}</td>
+        </tr>
+        ` : ''}
         <tr>
           <td style="font-weight:bold;">Payment ID:</td>
           <td>${paymentId}</td>
@@ -390,7 +401,7 @@ function paymentRejectedEmail(app, prettyId, amount, paymentType) {
 
     <p>
       You can re-upload your proof ${paymentType === 'course_fee' ? 'and documents' : ''} using the payment link 
-      <a href= "https://application.pgcpaitl.jntugv.edu.in/${paymentType === 'course_fee' ? 'course-fee.html' : 'payment.html'}?id=${prettyId}">Proceed to Re-upload</a>
+      <a href= "https://application.pgcpaitl.jntugv.edu.in/${paymentType === 'course_fee' ? 'course-fee.html' : 'payment.html'}?id=${encrypt(prettyId)}">Proceed to Re-upload</a>
     </p>
 
     <p style="margin-top:20px;">
@@ -437,7 +448,7 @@ function paymentPendingEmail(app, prettyId) {
     </div>
 
     <p style="text-align:center; margin-top:25px;">
-      <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${prettyId}" 
+      <a href="https://application.pgcpaitl.jntugv.edu.in/payment.html?id=${encrypt(prettyId)}" 
          style="display: inline-block; padding: 12px 24px; background-color: #004c97; color: #ffffff; border-radius: 6px; text-decoration: none; font-weight: bold;">
         Proceed to Payment
       </a>
@@ -536,21 +547,30 @@ function courseFeeRequestEmail(app, id) {
     </p>
 
     <p>
-      You are now requested to complete the <strong>Course Fee Payment</strong> of 
-      <span style="font-size:16px; font-weight:bold; color:#d35400;">₹30,000/- (Thirty Thousand INR)</span> 
-      to confirm your admission.
+      The total fee for the PGCPAITL course is <strong>₹30,000/-</strong>.
+      To facilitate candidates, the University offers a <strong>two-installment (EMI) payment option</strong>:
+    </p>
+
+    <div style="background:#f0f7ff; padding:15px; border-left:5px solid #004c97; margin:20px 0;">
+      <strong>Installment Plan Details:</strong><br/>
+      • <strong>First Installment:</strong> ₹15,000/- (Payable on or before 06 Feb 2026)<br/>
+      • <strong>Second Installment:</strong> ₹15,000/- (Payable on or before 06 May 2026)
+    </div>
+
+    <p style="font-size:12px; color:#666;">
+      <em>* Admission will be confirmed only after the payment of the first installment.</em>
     </p>
 
     <div style="text-align:center; padding:20px; border:1px solid #eee; border-radius:8px; margin:25px 0; background:#f9f9f9;">
       <h3 style="margin-top:0; color:#e65100;">Pay Securely Online</h3>
       <p style="font-size:14px; color:#555;">
          Click the button below to open the secure payment gateway.<br>
-         You can scan the QR code and upload proof on the page.
+         You can choose between Full Payment (₹30,000) or Installment (₹15,000).
       </p>
       
-      <a href="https://application.pgcpaitl.jntugv.edu.in/course-fee.html?id=${id}" 
+      <a href="https://application.pgcpaitl.jntugv.edu.in/course-fee.html?id=${encrypt(id)}" 
          style="background-color:#d35400; color:#fff; padding:14px 28px; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-block; font-size:16px;">
-        Pay Course Fee (₹30,000)
+        Pay Course Fee / EMI
       </a>
 
       <p style="margin-top:15px; font-size:12px; color:#888;">
@@ -710,6 +730,48 @@ function adminCourseFeeAndDocsEmail(app, docCount) {
   `);
 }
 
+function secondInstallmentReminderEmail(app, encryptedId) {
+  const paymentLink = `${process.env.APP_URL || 'http://localhost:3000'}/course-fee.html?id=${encryptedId}`;
+
+  return layout(`
+    <h2 style="color:#003c7a; margin-top:0;">Second Installment Reminder</h2>
+
+    <p>Dear <strong>${escapeHtml(app.fullName)}</strong>,</p>
+
+    <p>
+      This is a formal reminder regarding your Course Fee payment for the 
+      <strong>PG Certificate Programme in Artificial Intelligence, Technology & Law (PGCPAITL)</strong>.
+    </p>
+
+    <div style="background:#fff8e6; border-left:4px solid #ff9800; padding:15px; border-radius:5px; margin:20px 0;">
+      <p style="margin:0; color:#5d4037; font-size:15px;">
+        Our records indicate that you have opted for the <strong>Installment (EMI)</strong> plan.
+        The second installment of <strong style="color:#d35400;">₹15,000/-</strong> is now due.
+      </p>
+    </div>
+
+    <p>
+      Please complete your payment at the earliest to avoid any late fees or admission complications.
+    </p>
+
+    <div style="text-align:center; margin-top:25px;">
+      <a href="${paymentLink}" 
+         style="background-color:#003c7a; color:#fff; padding:14px 28px; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-block; font-size:16px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+        Pay Second Installment Now
+      </a>
+    </div>
+
+    <p style="margin-top:20px; font-size:13px; color:#777;">
+      <em>If you have already made the payment, please ensure you have uploaded the payment proof on the portal or ignore this message.</em>
+    </p>
+
+    <p style="margin-top:20px;">
+      Regards,<br/>
+      <strong>PGCPAITL Admissions Team</strong>
+    </p>
+  `);
+}
+
 module.exports = {
   sendMail,
   applicantSubmissionEmail,
@@ -725,5 +787,6 @@ module.exports = {
   adminPaymentUploadedEmail,
   documentUploadSuccessEmail,
   adminCourseFeeAndDocsEmail,
+  secondInstallmentReminderEmail,
   layout
 };

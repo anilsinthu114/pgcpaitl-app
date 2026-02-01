@@ -94,12 +94,9 @@ async function loadPayments() {
 }
 
 function getCorrectAmount(p) {
-  // If it's a course fee, it MUST be 30000, even if legacy data says 1000 or is missing.
-  if (p.payment_type === 'course_fee') {
-    return APP_COURSE_FEE;
-  }
-  // Otherwise fallback to stored amount or Registration Fee default
-  return Number(p.amount) || APP_REG_FEE;
+  // Use stored amount directly, fallback to defaults only if totally missing
+  if (p.amount) return Number(p.amount);
+  return (p.payment_type === 'course_fee') ? 30000 : 1000;
 }
 
 
@@ -171,6 +168,7 @@ function renderPayments(payments) {
       </td>
       <td>₹ ${amt.toLocaleString()}</td>
       <td><strong>${p.payment_type === 'course_fee' ? 'Course Fee' : 'Registration'}</strong></td>
+      <td><span style="font-size:0.8rem; color:#666;">${p.emi_option ? (p.emi_option === 'emi' ? 'Installment' : 'Full Payment') : '-'}</span></td>
       <td style="font-family:monospace; font-weight:600;">${escapeHtml(p.utr)}</td>
       <td><span class="status ${badgeClass}">${p.status}</span></td>
       <td>${new Date(p.uploaded_at).toLocaleDateString()}</td>
@@ -212,6 +210,12 @@ function renderPayments(payments) {
           <span class="app-card-label">Type</span>
           <span><strong>${p.payment_type === 'course_fee' ? 'Course Fee' : 'Registration'}</strong></span>
         </div>
+        ${p.emi_option ? `
+        <div class="app-card-row">
+          <span class="app-card-label">Plan</span>
+          <span>${p.emi_option === 'emi' ? 'Installment' : 'Full Payment'}</span>
+        </div>
+        ` : ''}
        <div class="app-card-row">
          <span class="app-card-label">UTR/Ref</span>
          <span style="font-family:monospace;">${escapeHtml(p.utr)}</span>

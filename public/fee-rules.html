@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Payment & EMI Rules — PGCPAITL</title>
+    <link rel="stylesheet" href="/css/modern-student.css">
+    <style>
+        .rules-section {
+            margin-top: 30px;
+        }
+
+        .rules-section h3 {
+            color: var(--primary);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 25px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-card-alt {
+            background: #fff;
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid #e1e8ed;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .info-card-alt h4 {
+            margin-top: 0;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .highlight-box {
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            padding: 15px;
+            border-radius: var(--radius);
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .timeline-box {
+            border-left: 3px solid var(--primary);
+            padding-left: 20px;
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .fee-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .fee-table th,
+        .fee-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .fee-table th {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">PGCPAITL ADMISSIONS</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/check-status.html">Track Status</a></li>
+            <li><a href="/fee-rules.html" class="active">Fee Rules</a></li>
+            <li><a href="/" class="nav-btn">Apply Now</a></li>
+        </ul>
+    </nav>
+
+    <div class="page">
+        <div class="card">
+            <div class="form-header">
+                <div class="header-row">
+                    <div class="header-logo"><img src="/jntugv-logo.png" alt="JNTU-GV Logo"
+                            onerror="this.src='https://jntugv.edu.in/static/media/jntugvcev.b33bb43b07b2037ab043.jpg'">
+                    </div>
+                    <div class="header-title">
+                        <h1>PGCPAITL Fee & EMI Policy</h1>
+                        <h2>Artificial Intelligence, Technology & Law Program</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-banner">
+                <div class="banner-icon">📢</div>
+                <div>
+                    <strong>Important Notice:</strong> To support a diverse range of applicants, the University and
+                    DSNLU have introduced a two-installment (EMI) plan for the Course Fee payment. Admission
+                    confirmation is tied strictly to the adherence of these payment rules.
+                </div>
+            </div>
+
+            <div class="rules-section">
+                <h3>1. Comprehensive Fee Structure</h3>
+                <p>The total financial commitment for the PG Certificate Programme (PGCPAITL) is bifurcated as follows:
+                </p>
+                <table class="fee-table">
+                    <thead>
+                        <tr>
+                            <th>Fee Component</th>
+                            <th>Amount</th>
+                            <th>Nature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Application Registration Fee</td>
+                            <td><strong>₹1,000</strong></td>
+                            <td>One-time, Non-Refundable</td>
+                        </tr>
+                        <tr>
+                            <td>Total Tuition/Course Fee</td>
+                            <td><strong>₹30,000</strong></td>
+                            <td>Refundable only as per Univ. Policy</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="rules-section">
+                <h3>2. Course Fee Payment Options</h3>
+                <p>Candidates can choose one of the following two paths to settle their course fee:</p>
+
+                <div class="info-grid">
+                    <div class="info-card-alt">
+                        <h4>Option A: Full Payment</h4>
+                        <p>Complete the entire course fee in a single transaction.</p>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: var(--primary); margin: 10px 0;">₹30,000
+                        </div>
+                        <p style="font-size: 0.85rem; color: #666;">Due Date: <strong>06 February 2026</strong></p>
+                    </div>
+                    <div class="info-card-alt" style="border-left: 4px solid var(--accent);">
+                        <h4>Option B: EMI (Installments)</h4>
+                        <p>Pay the fee in two equal installments for convenience.</p>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #d35400; margin: 10px 0;">₹15,000 +
+                            ₹15,000</div>
+                        <p style="font-size: 0.85rem; color: #666;">1st Installment Due: <strong>06 Feb 2026</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rules-section">
+                <h3>3. Installment (EMI) Deadlines</h3>
+                <div class="timeline-box">
+                    <div class="timeline-item">
+                        <strong>First Installment (₹15,000):</strong> Must be paid by <strong>06 February 2026</strong>.
+                        This is mandatory to receive the Admission Confirmation and log-in credentials for class work.
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Second Installment (₹15,000):</strong> Must be paid by <strong>06 May 2026</strong>.
+                        Failure to pay the second installment may result in withholding of the final certification and
+                        examination results.
+                    </div>
+                </div>
+            </div>
+
+            <div class="rules-section">
+                <h3>4. Payment Verification Rules</h3>
+                <ul>
+                    <li><strong>UTR/Ref No:</strong> Every UPI or Bank Transfer generates a unique transaction reference
+                        (UTR) number. This number MUST be entered correctly in the portal.</li>
+                    <li><strong>Screenshot Proof:</strong> A clear screenshot of the successful payment showing the UTR,
+                        date, and amount must be uploaded.</li>
+                    <li><strong>Review Period:</strong> All submissions undergo a manual verification by the admissions
+                        team. Verification typically takes 24-48 business hours.</li>
+                </ul>
+            </div>
+
+            <div class="rules-section">
+                <h3>5. Refund & Cancellation Policy</h3>
+                <div class="highlight-box">
+                    The Application Registration Fee (₹1,000) is strictly <strong>non-refundable</strong> under any
+                    circumstances. The Course Fee is also generally non-refundable once admission is confirmed. For
+                    exceptional cases, refund requests will be governed by the standard academic refund rules of
+                    JNTU-GV.
+                </div>
+            </div>
+
+            <div class="rules-section"
+                style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                <p style="color: #666; font-size: 0.9rem;">For queries regarding payments, please email us at:<br>
+                    <a href="mailto:applicationspgcpaitl@jntugv.edu.in"
+                        style="font-weight: 600; color: var(--primary);">applicationspgcpaitl@jntugv.edu.in</a>
+                </p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <p>© 2025 PGCPAITL Admissions — JNTU-GV & DSNLU</p>
+        </div>
+    </div>
+</body>
+
+</html>

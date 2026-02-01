@@ -54,7 +54,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     hiddenId.value = j.id;
+    if (j.prettyId) {
+      const dispEl = document.getElementById("displayAppId");
+      if (dispEl) dispEl.innerText = j.prettyId;
+    }
     console.log("✅ Numeric ID set:", j.id);
+
+    // ---------------------------------------------
+    // NEW: Handle Course Fee Installment UI
+    // ---------------------------------------------
+    if (window.location.pathname.includes("course-fee.html")) {
+      const coursePaid = Number(j.coursePaid || 0);
+      console.log(`💰 Course Fee already paid: ₹${coursePaid}`);
+
+      if (coursePaid >= 15000 && coursePaid < 30000) {
+        // Switch UI to 2nd Installment
+        console.log("🔄 Switching to 2nd Installment UI");
+        const emiRadio = document.querySelector('input[name="fee_opt"][value="emi"]');
+        const fullRadio = document.querySelector('input[name="fee_opt"][value="full"]');
+
+        if (emiRadio) {
+          emiRadio.checked = true;
+          // Hide full payment option as 1st is done
+          if (fullRadio) fullRadio.parentElement.style.display = 'none';
+
+          // Modify labels to reflect 2nd installment
+          if (typeof updateFee === 'function') {
+            updateFee(15000, 'Second Installment (EMI)');
+
+            // Further refine UI for clarity
+            const emiLabel = document.getElementById('emiLabel');
+            if (emiLabel) emiLabel.style.borderColor = '#2ecc71'; // Success green
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) submitBtn.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+          }
+        }
+      } else if (coursePaid >= 30000) {
+        // Fully paid logic
+        const content = document.querySelector('.payment-content');
+        if (content) {
+          content.innerHTML = `
+            <div style="text-align:center; padding: 40px; background:#f0fdf4; border-radius:12px; border:1px solid #bbf7d0;">
+              <h2 style="color:#166534; margin-bottom:10px;">Course Fee Fully Paid</h2>
+              <p style="color:#15803d;">You have already completed the full course fee payment of ₹30,000.</p>
+              <div style="margin-top:25px;">
+                <a href="/upload-documents.html?id=${encodeURIComponent(prettyId)}" class="btn-primary" style="text-decoration:none;">Proceed to Document Upload</a>
+              </div>
+            </div>
+          `;
+        }
+        const emiSelection = document.querySelector('.emi-selection');
+        if (emiSelection) emiSelection.style.display = 'none';
+
+        const banner = document.getElementById('infoBanner');
+        if (banner) banner.innerText = "Payment completed. Please upload your documents for verification.";
+      }
+    }
 
   } catch (err) {
     console.error("❌ Error resolving ID:", err);
@@ -75,15 +131,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     // ---------------------------------------------
-    // STRICTLY ENFORCE VALUES BASED ON PAGE CONTEXT
+    // ENFORCE VALUES BASED ON PAGE CONTEXT (WITH EMI SUPPORT)
     // ---------------------------------------------
     const isCourseFeePage = window.location.pathname.includes("course-fee.html");
 
     if (isCourseFeePage) {
-      // Course Fee: 30,000
       fd.set("payment_type", "course_fee");
-      fd.set("amount", "30000");
-      console.log("ℹ️ Context: Course Fee Page (Force set 30000)");
+
+      // Get selected fee option from form
+      const feeOpt = fd.get("fee_opt");
+      const currentAmount = fd.get("amount") || "30000"; // fallback to full
+
+      console.log(`ℹ️ Context: Course Fee Page | Option: ${feeOpt} | Amount: ${currentAmount}`);
     } else {
       // Registration Fee: 1,000
       fd.set("payment_type", "registration");
@@ -130,9 +189,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // If it's a duplicate, we might want to redirect immediately or let them read the alert
         setTimeout(() => {
-          // Redirect to success page WITH ID for button usage
-          const baseRedirect = j.redirect ? j.redirect.split('?')[0] : "/payment-success.html";
-          window.location.href = baseRedirect + "?id=" + safeId;
+          // Use server provided redirect if available, otherwise fallback
+          if (j.redirect) {
+            window.location.href = j.redirect;
+          } else {
+            window.location.href = "/payment-success.html?id=" + safeId;
+          }
         }, j.message ? 2000 : 2500); // Faster redirect if alert handled, but alert blocks execution anyway
 
       } else {

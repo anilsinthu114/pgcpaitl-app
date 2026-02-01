@@ -11,9 +11,109 @@
     <link rel="stylesheet" href="/css/modern-student.css">
     <link rel="stylesheet" href="/css/gateway.css">
     <link rel="stylesheet" href="/css/toast.css">
+
+    <script>
+        // Define updateFee globally before page renders
+        function updateFee(amt, label) {
+            console.log(`🔄 updateFee called: ₹${amt} - ${label}`);
+            const displayAmt = amt.toLocaleString('en-IN');
+            const feeValue = amt === 30000 ? 'full' : 'emi';
+
+            // 1. Update Order Summary
+            const valEl = document.getElementById('amountValueText');
+            const noteEl = document.getElementById('installmentNote');
+            if (valEl) valEl.innerText = '₹' + displayAmt + '.00';
+            if (noteEl) noteEl.innerText = label;
+
+            // 2. Update Form Data
+            const amtInput = document.getElementById('formAmount');
+            const optInput = document.getElementById('fee_opt');
+            if (amtInput) amtInput.value = amt;
+            if (optInput) optInput.value = feeValue;
+
+            // 3. Update Submit Button
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.innerText = label.toLowerCase().includes('installment')
+                    ? `Verify & Submit ₹${displayAmt} (${label})`
+                    : `Verify & Submit ₹${displayAmt} Payment`;
+            }
+
+            // 4. Update Visual Selection
+            const emiLabel = document.getElementById('emiLabel');
+            const fullRadio = document.querySelector('input[name="fee_opt"][value="full"]');
+            const fullLabel = fullRadio ? fullRadio.nextElementSibling : null;
+
+            if (amt === 15000) {
+                if (emiLabel) {
+                    emiLabel.style.borderColor = '#007bff';
+                    emiLabel.style.borderWidth = '2px';
+                    emiLabel.style.background = '#f0f7ff';
+                }
+                if (fullLabel) {
+                    fullLabel.style.borderColor = '#ccc';
+                    fullLabel.style.borderWidth = '1px';
+                    fullLabel.style.background = 'white';
+                }
+            } else {
+                if (fullLabel) {
+                    fullLabel.style.borderColor = '#007bff';
+                    fullLabel.style.borderWidth = '2px';
+                    fullLabel.style.background = '#f0f7ff';
+                }
+                if (emiLabel) {
+                    emiLabel.style.borderColor = '#ccc';
+                    emiLabel.style.borderWidth = '1px';
+                    emiLabel.style.background = 'white';
+                }
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📋 Initializing payment UI...');
+
+            // Attach event listeners to radio buttons
+            const fullRadio = document.querySelector('input[name="fee_opt"][value="full"]');
+            const emiRadio = document.querySelector('input[name="fee_opt"][value="emi"]');
+
+            if (fullRadio) {
+                fullRadio.addEventListener('change', () => {
+                    if (fullRadio.checked) {
+                        updateFee(30000, 'Full Fee');
+                    }
+                });
+            }
+
+            if (emiRadio) {
+                emiRadio.addEventListener('change', () => {
+                    if (emiRadio.checked) {
+                        updateFee(15000, 'First Installment (EMI)');
+                    }
+                });
+            }
+
+            // Initialize with checked option
+            const checked = document.querySelector('input[name="fee_opt"]:checked');
+            if (checked) {
+                const amt = (checked.value === 'emi') ? 15000 : 30000;
+                const label = (checked.value === 'emi') ? 'First Installment (EMI)' : 'Full Fee';
+                updateFee(amt, label);
+            }
+        });
+    </script>
 </head>
 
 <body>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">PGCPAITL ADMISSIONS</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/check-status.html">Track Status</a></li>
+            <li><a href="/fee-rules.html">Fee Rules</a></li>
+            <li><a href="/" class="nav-btn">Apply Now</a></li>
+        </ul>
+    </nav>
 
     <div class="gateway-wrapper">
 
@@ -25,9 +125,10 @@
             </div>
 
             <div class="order-amount">
-                <div class="amount-label">Total Amount Due</div>
-                <div class="amount-value">₹30,000.00</div>
-                <div style="font-size:12px; opacity:0.6; margin-top:5px;">First Installment / Full Fee</div>
+                <div class="amount-label" id="amountLabelText">Total Amount Due</div>
+                <div class="amount-value" id="amountValueText">₹30,000.00</div>
+                <div id="installmentNote" style="font-size:12px; opacity:0.6; margin-top:5px;">First Installment / Full
+                    Fee</div>
             </div>
 
             <div class="order-details">
@@ -59,7 +160,33 @@
                 </div>
             </div>
 
-            <div class="info-banner">
+            <!-- EMI SELECTION -->
+            <div class="emi-selection"
+                style="margin: 20px 0; background: #f0f7ff; padding: 15px; border-radius: 8px; border: 1px solid #cce5ff;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; color:#004085;">Select Payment Option</h4>
+                    <a href="/fee-rules.html" target="_blank"
+                        style="font-size: 11px; color: #007bff; text-decoration: underline;">View Payment Rules</a>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <label style="flex: 1; cursor: pointer;">
+                        <input type="radio" name="fee_opt" value="full" checked>
+                        <div
+                            style="padding: 10px; border: 2px solid #007bff; border-radius: 6px; text-align: center; background: white;">
+                            <strong>Full Payment</strong><br>₹30,000
+                        </div>
+                    </label>
+                    <label style="flex: 1; cursor: pointer;">
+                        <input type="radio" name="fee_opt" value="emi">
+                        <div style="padding: 10px; border: 1px solid #ccc; border-radius: 6px; text-align: center; background: white;"
+                            id="emiLabel">
+                            <strong>installment (EMI)</strong><br>₹15,000
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="info-banner" id="infoBanner">
                 Step 1: Scan the QR code using any UPI app (GPay/PhonePe).<br>
                 Step 2: If scanning is not possible, use the UPI ID below.<br>
                 Step 3: Enter the UTR number and upload screenshot below.
@@ -91,7 +218,8 @@
                     <form id="payForm" enctype="multipart/form-data">
                         <input type="hidden" name="application_id" id="application_id">
                         <input type="hidden" name="payment_type" value="course_fee">
-                        <input type="hidden" name="amount" value="30000">
+                        <input type="hidden" name="amount" id="formAmount" value="30000">
+                        <input type="hidden" name="fee_opt" id="fee_opt" value="full">
 
                         <div class="input-group">
                             <label>UTR / Reference Number <span style="color:red">*</span></label>
@@ -112,15 +240,23 @@
                         <div id="payMsg" style="margin-bottom:15px; font-size:13px;"></div>
 
                         <button id="submitBtn" type="submit" class="btn-pay">
-                            Verify & Submit 30k Payment
+                            Verify & Submit ₹30,000 Payment
                         </button>
                     </form>
+
+                    <div
+                        style="margin-top: 15px; font-size: 11px; color: #555; background: #fffbe6; padding: 10px; border: 1px solid #ffe58f; border-radius: 4px;">
+                        <strong>Installment Notice:</strong> If opting for EMI, the second installment of ₹15,000 is due
+                        strictly on or before <strong>06 May 2026</strong>. Admission is confirmed only after the first
+                        installment.
+                    </div>
 
                     <div class="secure-badge">
                         🔒 SSL Secured Transaction
                     </div>
                 </div>
             </div>
+
 
         </div>
     </div>

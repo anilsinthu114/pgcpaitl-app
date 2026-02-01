@@ -84,6 +84,7 @@ CREATE TABLE application_payments (
     payment_mode ENUM('SBI_QR','UPI','BANK') 
         DEFAULT 'SBI_QR',
     payment_type ENUM('registration', 'course_fee') DEFAULT 'registration',
+    emi_option ENUM('full', 'emi') DEFAULT NULL, -- full payment or installment (EMI)
 
     screenshot_path VARCHAR(255) DEFAULT NULL,   -- Stored screenshot full path
     

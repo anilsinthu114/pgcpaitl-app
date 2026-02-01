@@ -15,8 +15,6 @@
             background-color: #f0f2f5;
             font-family: 'Inter', sans-serif;
             margin: 0;
-            padding-top: 100px;
-            /* Space for fixed header if needed, or just separation */
         }
 
         /* Override/Adjustments for Success Card */
@@ -181,27 +179,15 @@
 </head>
 
 <body>
-
-    <header class="form-header">
-        <div class="header-row">
-            <!-- LEFT LOGO -->
-            <div class="header-logo left">
-                <img src="jntugv-logo.png" alt="JNTUGV Logo" onerror="this.style.display='none'">
-            </div>
-
-            <!-- CENTER TEXT -->
-            <div class="header-title">
-                <h1>PGCPAITL – Online Application Form</h1>
-                <h2>Post Graduate Certificate Programme in Artificial Intelligence, Technology & Law</h2>
-                <p>Offered by JNTU-GV in collaboration with DSNLU</p>
-            </div>
-
-            <!-- RIGHT LOGO -->
-            <div class="header-logo right">
-                <img src="dsnlu-logo.png" alt="DSNLU Logo" onerror="this.style.display='none'" />
-            </div>
-        </div>
-    </header>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">PGCPAITL ADMISSIONS</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/check-status.html">Track Status</a></li>
+            <li><a href="/fee-rules.html">Fee Rules</a></li>
+            <li><a href="/" class="nav-btn">Apply Now</a></li>
+        </ul>
+    </nav>
 
     <div class="success-wrapper">
         <div class="success-card">

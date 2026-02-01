@@ -28,6 +28,8 @@ router.get("/application/:id", adminAuth, appController.getApplicationDetails);
 router.put("/application/:id/status", adminAuth, appController.updateApplicationStatus);
 router.post("/api/admin/application/:id/remind-payment", adminAuth, appController.sendPaymentReminder);
 router.post('/api/admin/application/:id/request-course-fee', adminAuth, appController.requestCourseFee);
+router.post('/api/admin/application/:id/remind-second-installment', adminAuth, appController.remindSecondInstallment);
+router.post('/api/admin/application/:id/send-message', adminAuth, appController.sendIndividualMail);
 router.post('/api/admin/applications/bulk-mail', adminAuth, appController.sendBulkMail);
 router.get("/application/file/:id", adminAuth, appController.downloadFile);
 

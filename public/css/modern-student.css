@@ -13,6 +13,81 @@
     --error: #e74c3c;
     --font-main: 'Segoe UI', system-ui, sans-serif;
     --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.08);
+    --nav-height: 70px;
+}
+
+/* NAVBAR STYLE */
+.navbar {
+    height: var(--nav-height);
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-brand {
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-decoration: none;
+    letter-spacing: 1px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links a {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-links a:hover {
+    color: var(--white);
+}
+
+.nav-links .active {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.nav-btn {
+    background: var(--accent);
+    color: var(--primary-dark) !important;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-weight: 700 !important;
+}
+
+.nav-btn:hover {
+    background: #e67e22;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        gap: 15px;
+    }
+
+    .nav-links a {
+        font-size: 0.8rem;
+    }
+
+    .nav-brand {
+        font-size: 1rem;
+    }
 }
 
 body {
@@ -27,6 +102,10 @@ body {
     max-width: 900px;
     margin: 40px auto;
     padding: 0 20px;
+}
+
+.page-wide {
+    max-width: 95% !important;
 }
 
 /* Card Container */
@@ -87,33 +166,87 @@ body {
 /* Form Elements */
 .form-group {
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
-label {
+.form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: 600;
     color: var(--primary-dark);
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
-.required {
-    color: var(--error);
+/* Fix radio/checkbox labels which were becoming display:block */
+.inline label,
+.checkbox-item label,
+label:has(input[type="radio"]),
+label:has(input[type="checkbox"]) {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0 !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    color: var(--text-dark);
+    padding: 5px 0;
+}
+
+.inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px 25px;
+    margin-top: 5px;
+    min-height: 40px;
+    align-items: center;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 input[type="text"],
 input[type="email"],
 input[type="tel"],
 input[type="date"],
+input[type="password"],
 input[type="number"],
 select,
 textarea {
     width: 100%;
-    padding: 12px;
+    height: 45px;
+    /* Standardize height */
+    padding: 0 15px;
     border: 1px solid #dce0e4;
     border-radius: var(--radius);
-    font-size: 1rem;
+    font-size: 0.95rem;
     box-sizing: border-box;
     transition: all 0.2s;
+    background-color: #fff;
+    display: block;
+}
+
+textarea {
+    height: auto !important;
+    padding: 12px 15px !important;
+    min-height: 100px;
+}
+
+select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    padding-right: 40px !important;
 }
 
 input:focus,
@@ -122,6 +255,13 @@ textarea:focus {
     border-color: var(--primary);
     outline: none;
     box-shadow: 0 0 0 3px rgba(0, 76, 151, 0.1);
+    background-color: #fff;
+}
+
+.required {
+    color: var(--error);
+    margin-left: 3px;
+    font-weight: 700;
 }
 
 /* Buttons */
@@ -146,6 +286,31 @@ textarea:focus {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 30px;
+}
+
+/* Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px 30px;
+    margin-bottom: 10px;
+}
+
+fieldset {
+    padding: 25px;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    background-color: #fdfdfd;
+}
+
+legend {
+    padding: 0 15px;
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Steps */
