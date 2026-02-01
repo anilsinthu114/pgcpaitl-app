@@ -120,9 +120,9 @@ function announcementBlock() {
   return `<div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #ffeeba;">
         <h4 style="margin: 0 0 10px; color: #856404; font-size: 16px;">📢 Important Updates</h4>
         <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
-          <li style="margin-bottom: 5px;"><strong>Registration Fee Deadline:</strong> 31st January 2026</li>
-          <li style="margin-bottom: 5px;"><strong>Course Fee Payment Deadline:</strong> 31st January 2026</li>
-          <li><strong>Course Commencement:</strong> 09 Feburary 2026 (Tentatively)</li>
+          <li style="margin-bottom: 5px;"><strong>Registration Fee Deadline:</strong> 6th February 2026</li>
+          <li style="margin-bottom: 5px;"><strong>Course Fee Payment Deadline:</strong> 6th February 2026</li>
+          <li><strong>Course Commencement:</strong> 9th February 2026 (Tentatively)</li>
         </ul>
       </div>
       `
