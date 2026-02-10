@@ -95,11 +95,11 @@
             <input type="hidden" name="amount" value="1000">
 
             <div class="input-group">
-              <label>UTR / Reference Number <span style="color:red">*</span></label>
+              <label>UTR / Reference Number <span class="required-asterisk">*</span></label>
               <input type="text" name="utr" id="utr" required placeholder="Ex: 403918293..." autocomplete="off">
             </div>
             <div class="input-group">
-              <label for="screenshot">Upload Payment Screenshot <span style="color:red">*</span></label>
+              <label for="screenshot">Upload Payment Screenshot <span class="required-asterisk">*</span></label>
               <input type="file" name="screenshot" id="screenshot" accept="image/jpeg,image/png,image/jpg" required
                 class="file-upload-input">
               <p class="help-text">
@@ -108,7 +108,7 @@
               </p>
             </div>
 
-            <div id="payMsg" style="margin-bottom:15px; font-size:13px;"></div>
+            <div id="payMsg" class="pay-message"></div>
 
             <button id="submitBtn" type="submit" class="btn-pay">
               Verify & Submit Payment

@@ -7,9 +7,18 @@
 ## 📌 Project Overview
 The **PGCPAITL Application Portal** is a full-stack web application designed to streamline the admission process for the Post Graduate Certificate Programme. It features a secure, payment-first workflow ensuring that applications are processed efficiently from submission to verification.
 
-The system is built with a robust **Node.js/Express MVC architecture** and features a dual-interface:
-1.  **Public Portal:** For applicants to register, track status, and upload payments.
-2.  **Admin Dashboard:** For university administrators to verify payments, review applications, and manage admissions.
+## 🆕 Revamped Frontend (Next.js)
+A new modern frontend is available in the `web/` directory, featuring:
+-   **Next.js 15+** (App Router)
+-   **React Query** & **Zod** Validation
+-   **Handwritten CSS** (Govt. Law & Tech Theme)
+
+### Quick Start
+1.  **Backend**: Run `node server.js` in the root directory.
+2.  **Frontend**: Run `cd web && npm run dev`.
+3.  Access the new portal at `http://localhost:3000`.
+
+See `web/README.md` for full documentation.
 
 ## 🚀 Key Features
 

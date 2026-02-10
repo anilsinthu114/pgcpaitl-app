@@ -34,21 +34,37 @@
         </div>
 
         <!-- NEW: MARQUEE ANNOUNCEMENT -->
-        <div style="color: #856404; padding: 10px 0;  margin-bottom: 20px; border-radius: 4px;">
-            <marquee behavior="scroll" direction="left" style="font-weight: 600; font-size: 15px;">
-                📢 PGCPAITL Admission Fee Update: Total fee ₹30,000 — Pay ₹15,000 on or before 06-02-2026 and the
-                remaining ₹15,000 on or before 06-05-2026 under the two-installment (EMI) option.
-                <a href="/fee-rules.html" style="color: #856404; text-decoration: underline;">View Payment Rules</a>
-                &nbsp;&nbsp;|&nbsp;&nbsp;
-                Application Registration Fee ends on 6th February 2026. &nbsp;&nbsp;|&nbsp;&nbsp;
-                Class Work Commencement is postponed to 09 February 2026 (Tentatively).
-            </marquee>
-            <script src="/marquee-handler.js" defer></script>
+        <div class="announcement-banner">
+            <style>
+                @keyframes scroll-left {
+                    0% {
+                        transform: translateX(100%);
+                    }
+
+                    100% {
+                        transform: translateX(-100%);
+                    }
+                }
+
+                .announcement-marquee {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    animation: scroll-left 20s linear infinite;
+                    padding: 10px;
+                }
+            </style>
+            <div class="announcement-marquee">
+                📢 PGCPAITL Admissions: Spot Admissions are open till 26th February 2026
+                <!-- <a href="/fee-rules.html" style="color: #856404; text-decoration: underline;">View Payment Rules</a> -->
+                <!-- &nbsp;&nbsp;|&nbsp;&nbsp;
+                Application Registration Fee ends on 6th February 2026. &nbsp;&nbsp;|&nbsp;&nbsp; -->
+                Class Work is in progress from 09 February 2026.
+            </div>
         </div>
 
         <!-- Initial Search Form (Hidden after search if successful)-->
-        <div id="searchPanel" class="card" style="max-width: 500px; margin: 0 auto;">
-            <h3 style="margin-top:0; color:#004c97;">Access Your Application</h3>
+        <div id="searchPanel" class="card search-panel">
+            <h3 class="search-panel-title">Access Your Application</h3>
             <form id="trackForm">
                 <div class="form-group">
                     <label>Application ID</label>
@@ -58,37 +74,36 @@
                     <label>Registered Email</label>
                     <input type="text" id="identifier" placeholder="Email used during registration" required>
                 </div>
-                <button type="submit" class="btn-primary" style="width:100%">View Dashboard</button>
+                <button type="submit" class="btn-primary btn-full-width">View Dashboard</button>
             </form>
-            <div id="resultMsg" style="color:red; margin-top:10px; text-align:center;"></div>
+            <div id="resultMsg" class="result-message"></div>
         </div>
 
         <!-- Main Dashboard (Hidden initially) -->
-        <div id="dashboardPanel" style="display:none; grid-template-columns: 1fr 2fr; gap: 30px; margin-top:20px;">
+        <div id="dashboardPanel" class="dashboard-panel">
 
             <!-- Left: Profile Card -->
-            <div class="card" style="height:fit-content;">
-                <h3 style="border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-top:0;">Applicant Profile</h3>
-                <div style="text-align:center; margin:20px 0;">
-                    <div
-                        style="width:80px; height:80px; background:#e0e0e0; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:2rem;">
+            <div class="card profile-card">
+                <h3 class="card-header">Applicant Profile</h3>
+                <div class="profile-content">
+                    <div class="profile-avatar">
                         👤</div>
-                    <h2 id="profileName" style="margin:10px 0 5px; font-size:1.2rem; color:#333;"></h2>
-                    <p id="profileId" style="color:#666; margin:0; font-weight:bold;"></p>
+                    <h2 id="profileName" class="profile-name"></h2>
+                    <p id="profileId" class="profile-id"></p>
                 </div>
 
-                <div style="font-size:0.9rem; color:#555;">
+                <div class="profile-details">
                     <p><strong>Email:</strong> <span id="profileEmail"></span></p>
                     <p><strong>Mobile:</strong> <span id="profileMobile"></span></p>
                     <p><strong>Course:</strong> <span id="profileCourse"></span></p>
 
-                    <div id="statusBadgeContainer" style="margin-top:20px; text-align:center;"></div>
+                    <div id="statusBadgeContainer" class="status-badge-container"></div>
                 </div>
             </div>
 
             <!-- Right: Timeline -->
             <div class="card">
-                <h3 style="border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-top:0;">Admission Timeline</h3>
+                <h3 class="card-header">Admission Timeline</h3>
 
                 <div class="timeline-container" id="timelineContainer">
                     <!-- Steps will be injected here by JS -->
