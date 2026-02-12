@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import styles from './page.module.css';
+import { useEffect, Suspense } from "react";
+import '@/styles/thankyou.css';
 
-export default function PaymentSuccessPage() {
+
+function SuccessContent() {
     const searchParams = useSearchParams();
     const id = searchParams.get('id') || searchParams.get('application_id');
 
@@ -88,3 +89,12 @@ export default function PaymentSuccessPage() {
         </div>
     );
 }
+
+export default function PaymentSuccessPage() {
+    return (
+        <Suspense fallback={<div className="p-10 text-center">Loading payment details...</div>}>
+            <SuccessContent />
+        </Suspense>
+    );
+}
+

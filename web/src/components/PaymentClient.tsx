@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { Label } from "./ui/Label";
@@ -57,7 +58,9 @@ export default function PaymentClient() {
             <div className="card max-w-md mx-auto p-8 text-center">
                 <h2 className="text-2xl font-bold text-green-600 mb-4">Payment Submitted!</h2>
                 <p>Your payment details have been uploaded for verification.</p>
-                <Button onClick={() => window.location.href = "/"} className="mt-6">Go Home</Button>
+                <Link href="/">
+                    <Button className="mt-6">Go Home</Button>
+                </Link>
             </div>
         )
     }

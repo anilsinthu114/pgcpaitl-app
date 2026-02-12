@@ -1,3 +1,4 @@
+import "@/styles/upload-success.css";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

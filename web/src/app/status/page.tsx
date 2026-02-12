@@ -11,7 +11,7 @@ import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
 interface TimelineStep {
     label: string;
@@ -42,7 +42,7 @@ interface StatusResponse {
     error?: string;
 }
 
-export default function StatusPage() {
+function StatusContent() {
     const searchParams = useSearchParams();
     const urlId = searchParams.get("id");
 
@@ -53,12 +53,14 @@ export default function StatusPage() {
 
     const statusMutation = useMutation({
         mutationFn: async () => {
-            const res = await api.get(`/application/status?id=${encodeURIComponent(searchId)}&identifier=${encodeURIComponent(identifier)}`);
+            const res = await api.get(`/api/application/status?id=${encodeURIComponent(searchId)}&identifier=${encodeURIComponent(identifier)}`);
             return res.data;
         },
-        onSuccess: (data) => {
+
+        onSuccess: (data: StatusResponse) => {
             if (data.ok) {
                 setResult(data);
+
                 setError("");
             } else {
                 setError(data.error || "Record not found.");
@@ -75,6 +77,7 @@ export default function StatusPage() {
         e.preventDefault();
         statusMutation.mutate();
     };
+
 
     // Helper to render action buttons based on step status
     const renderAction = (key: string, step: TimelineStep, prettyId: string) => {
@@ -140,7 +143,7 @@ export default function StatusPage() {
                             <Input
                                 id="appId"
                                 value={searchId}
-                                onChange={(e) => setSearchId(e.target.value)}
+                                onChange={(e: any) => setSearchId(e.target.value)}
                                 placeholder="e.g. PGCPAITL-2025-0023"
                                 required
                             />
@@ -150,7 +153,7 @@ export default function StatusPage() {
                             <Input
                                 id="identifier"
                                 value={identifier}
-                                onChange={(e) => setIdentifier(e.target.value)}
+                                onChange={(e: any) => setIdentifier(e.target.value)}
                                 placeholder="Email or Mobile used"
                                 required
                             />
@@ -233,3 +236,12 @@ export default function StatusPage() {
         </div>
     );
 }
+
+export default function StatusPage() {
+    return (
+        <Suspense fallback={<div className="p-10 text-center">Loading status details...</div>}>
+            <StatusContent />
+        </Suspense>
+    );
+}
+

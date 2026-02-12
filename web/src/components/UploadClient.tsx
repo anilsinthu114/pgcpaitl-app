@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import "@/styles/gateway.css";
 import { useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "./ui/Button";
@@ -20,6 +21,7 @@ interface UploadValues {
 }
 
 export default function UploadClient() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const prettyId = searchParams.get("id");
     const [numericId, setNumericId] = useState<number | null>(null);
@@ -61,7 +63,8 @@ export default function UploadClient() {
         },
         onSuccess: (data) => {
             alert("Documents Uploaded Successfully!");
-            window.location.href = `/payment/success?id=${prettyId}&upload=true`;
+            // window.location.href = `/payment/success?id=${prettyId}&upload=true`;
+            router.push(`/payment/success?id=${prettyId}&upload=true`);
         },
         onError: (err: any) => {
             alert("Upload failed: " + (err.response?.data?.error || err.message));

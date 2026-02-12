@@ -1,9 +1,9 @@
-import PaymentClient from "@/components/PaymentClient"; // Fix import path if needed
+import PaymentClient from "@/components/PaymentClient";
 import { Suspense } from "react";
 
 export default function PaymentPage() {
     return (
-        <Suspense fallback={<div className="text-center p-8">Loading Payment Interface...</div>}>
+        <Suspense fallback={<div>Loading payment...</div>}>
             <PaymentClient />
         </Suspense>
     );

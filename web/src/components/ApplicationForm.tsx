@@ -12,6 +12,11 @@ import { Input } from "./ui/Input";
 import { Label } from "./ui/Label";
 import { Select } from "./ui/Select";
 import { Textarea } from "./ui/Textarea";
+import { useToast } from "./ui/Toast";
+import { useEffect } from "react";
+
+
+import { useRouter } from "next/navigation"; // Added import
 
 const STEPS = [
     { id: 1, label: "Personal Details" },
@@ -23,13 +28,18 @@ const STEPS = [
 ];
 
 export default function ApplicationForm() {
+    const router = useRouter();
     const [step, setStep] = useState(1);
+    const { showToast } = useToast();
     const {
         register,
         handleSubmit,
         trigger,
+        watch,
+        reset,
         formState: { errors },
     } = useForm<ApplicationFormValues>({
+
         resolver: zodResolver(applicationSchema),
         defaultValues: {
             nationality: "Indian",
@@ -38,6 +48,30 @@ export default function ApplicationForm() {
         }
     });
 
+
+    // Load Draft
+    useEffect(() => {
+        const saved = localStorage.getItem("pgc_app_draft");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                reset(parsed);
+                // showToast("Restored saved draft", "info"); // Optional: notify user
+            } catch (e) {
+                console.error("Failed to restore draft", e);
+            }
+        }
+    }, [reset]);
+
+    // Auto-save
+    useEffect(() => {
+        const subscription = watch((value: any) => {
+            localStorage.setItem("pgc_app_draft", JSON.stringify(value));
+        });
+        return () => subscription.unsubscribe();
+    }, [watch]);
+
+
     const mutation = useMutation({
         mutationFn: async (data: ApplicationFormValues) => {
             const response = await api.post("/draft", data);
@@ -45,13 +79,18 @@ export default function ApplicationForm() {
         },
         onSuccess: (data: any) => {
             if (data.redirect) {
-                window.location.href = data.redirect;
+                localStorage.removeItem("pgc_app_draft"); // Clear draft
+                showToast("Application Submitted! Redirecting...", "success");
+                setTimeout(() => {
+                    // window.location.href = data.redirect;
+                    router.push(data.redirect);
+                }, 1000);
             } else {
-                alert(`Application Submitted Successfully! Application ID: ${data.application_id || 'Pending'}`);
+                showToast(`Application Submitted! ID: ${data.application_id || 'Pending'}`, "success");
             }
         },
         onError: (error: any) => {
-            alert(`Submission Failed: ${error.response?.data?.error || error.message}`);
+            showToast(`Submission Failed: ${error.response?.data?.error || error.message}`, "error");
         },
     });
 
@@ -72,6 +111,8 @@ export default function ApplicationForm() {
         if (result) {
             setStep(s => Math.min(s + 1, 6));
             window.scrollTo(0, 0);
+        } else {
+            showToast("Please fix the errors before proceeding.", "error");
         }
     };
 
